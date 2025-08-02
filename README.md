@@ -3,6 +3,14 @@
 
 This Python script downloads all chapters of an audiobook from `tokybook.com`, embeds metadata (title, author, narrator, etc.), and attaches cover art.
 
+![Repo Stars](https://img.shields.io/github/stars/aviiciii/tokybook?style=social)
+![Python](https://img.shields.io/badge/Python-3.7%2B-blue?logo=python&logoColor=white)
+![Platform](https://img.shields.io/badge/Platform-Cross--Platform-009688?logo=windows&logoColor=white)
+![License](https://img.shields.io/github/license/aviiciii/tokybook?color=orange)
+![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
+![Issues](https://img.shields.io/github/issues/aviiciii/tokybook?color=informational)
+
+
 ## Features
 
 * Downloads all chapters for a given audiobook URL.
@@ -30,9 +38,7 @@ pip install -r requirements.txt
 
 This command will read the `requirements.txt` file and automatically install all the necessary libraries.
 
----
-
-## How to Run the Script
+## 2. Run the Script
 
 Once the setup is complete, you can run the script from your terminal:
 
