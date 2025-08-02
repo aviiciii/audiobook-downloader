@@ -1,3 +1,14 @@
+# audio files
+audiobooks/
+*.mp3
+*.wav
+*.flac
+*.ogg
+*.aac
+*.m4a
+*.opus
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
