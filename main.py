@@ -16,6 +16,9 @@ from mutagen.id3 import (
     TIT2,
     ID3NoHeaderError,
 )
+from rich import print
+from rich.table import Table
+from rich.console import Console
 
 
 # --- HELPER FUNCTION TO SCRAPE DETAILS ---
@@ -95,13 +98,18 @@ def download_and_tag_audiobook(book_url):
         return
 
     # --- NEW: Display scraped info and ask for user override ---
-    print("\n--- Scraped Book Details ---")
-    print(f"Title:    {sanitized_title}")
-    print(f"Author:   {author_name or 'Not Found'}")
-    print(f"Narrator: {narrator_name or 'Not Found'}")
-    print(f"Year:     {year_text or 'Not Found'}")
-    print(f"Cover Art URL: {cover_url or 'Not Found'}")
-    print("--------------------------")
+    console = Console()
+    details_table = Table(title="Scraped Book Details", show_lines=True)
+    details_table.add_column("Field", style="bold cyan", width=15)
+    details_table.add_column("Value", style="white", width=45)
+
+    details_table.add_row("Title", sanitized_title)
+    details_table.add_row("Author", author_name or "Not Found")
+    details_table.add_row("Narrator", narrator_name or "Not Found")
+    details_table.add_row("Year", year_text or "Not Found")
+    details_table.add_row("Cover Art URL", cover_url or "Not Found")
+
+    console.print(details_table)
 
     while True:
         choice = (
@@ -184,19 +192,20 @@ def download_and_tag_audiobook(book_url):
     except requests.exceptions.RequestException as e:
         print(f"Warning: Could not download cover art. Error: {e}")
 
-    # --- 6. Print Summary ---
-    print("\n" + "+" + "-" * 60 + "+")
-    print("|" + "Final Audiobook Summary".center(60) + "|")
-    print("+" + "-" * 15 + "+" + "-" * 44 + "+")
-    print(f"| {'Title':<13} | {sanitized_title:<42} |")
-    print(f"| {'Author':<13} | {(author_name if author_name else 'N/A'):<42} |")
-    print(f"| {'Narrator':<13} | {(narrator_name if narrator_name else 'N/A'):<42} |")
-    print(f"| {'Year':<13} | {(year_text if year_text else 'N/A'):<42} |")
-    print(
-        f"| {'Cover Art':<13} | {'Downloaded' if artwork_data else 'Not Found/Skipped':<42} |"
-    )
-    print(f"| {'Save Path':<13} | {book_dir:<42} |")
-    print("+" + "-" * 60 + "+")
+    # --- 6. Print Summary using Rich Table ---
+    summary_table = Table(title="Final Audiobook Summary", show_lines=True)
+
+    summary_table.add_column("Field", style="bold cyan", width=15)
+    summary_table.add_column("Value", style="white", width=45)
+
+    summary_table.add_row("Title", sanitized_title)
+    summary_table.add_row("Author", author_name if author_name else "N/A")
+    summary_table.add_row("Narrator", narrator_name if narrator_name else "N/A")
+    summary_table.add_row("Year", year_text if year_text else "N/A")
+    summary_table.add_row("Cover Art", "Downloaded" if artwork_data else "Not Found/Skipped")
+    summary_table.add_row("Save Path", book_dir)
+
+    console.print(summary_table)
 
     # --- 7. Download each chapter using yt-dlp ---
     total_chapters = len(chapter_links)
@@ -235,7 +244,6 @@ def download_and_tag_audiobook(book_url):
             subprocess.run(command, check=True, capture_output=True, text=True)
 
             # --- 8. Embed Metadata ---
-            print(f"Tagging metadata for {chapter_title}...")
             try:
                 audio = ID3(file_name)
             except ID3NoHeaderError:
@@ -263,6 +271,7 @@ def download_and_tag_audiobook(book_url):
                 )
 
             audio.save(file_name)
+            print(f"Downloaded and tagged metadata for {chapter_title}.")
 
         except FileNotFoundError:
             print("\nFATAL ERROR: 'yt-dlp' command not found.")

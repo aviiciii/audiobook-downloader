@@ -8,6 +8,7 @@ This Python script downloads all chapters of an audiobook from `tokybook.com`, e
 > This project is intended for educational purposes only. Please respect copyright laws and the terms of service of [tokybook](https://tokybook.com).
 
 
+![Last Updated](https://img.shields.io/github/last-commit/aviiciii/tokybook?label=Last%20Updated)
 ![Repo Stars](https://img.shields.io/github/stars/aviiciii/tokybook?style=social)
 ![Python](https://img.shields.io/badge/Python-3.7%2B-blue?logo=python&logoColor=white)
 ![Platform](https://img.shields.io/badge/Platform-Cross--Platform-009688?logo=windows&logoColor=white)
@@ -29,25 +30,50 @@ This Python script downloads all chapters of an audiobook from `tokybook.com`, e
 
 ## Setup and Installation
 
-To run this script, you need [Python 3 ](https://www.python.org/downloads/)installed on your system.
+To run this script, you need [Python 3](https://www.python.org/downloads/) installed on your system.
 
-### 1. Install Required Packages
 
-First, you need to install the necessary Python libraries. This project includes a `requirements.txt` file that lists all the dependencies.
+### Step 1: Clone the Repository
 
-To install them, open your terminal or command prompt in the project directory and run:
+Start by cloning this repository to your local machine:
+
+```bash
+git clone https://github.com/aviiciii/tokybook.git
+cd tokybook
+```
+
+
+### Step 2: Install Required Dependencies
+
+This project requires both Python packages and FFmpeg for audio processing.
+
+**Install Python Packages:**  
+The `requirements.txt` file lists all the dependencies.  
+Open your terminal or command prompt in the project directory and run:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-> **Note:**  
-> Additionally, you need to install **FFmpeg**, which is required for audio processing.  
-> You can download it from [ffmpeg.org](https://ffmpeg.org/download.html) and follow the installation instructions for your operating system.  
-> Make sure `ffmpeg` is available in your system's PATH so the script can use it.
+**Install FFmpeg:**  
+Make sure FFmpeg is available in your system's PATH.
+
+- **macOS:**  
+    ```bash
+    brew install ffmpeg
+    ```
+- **Linux (Debian/Ubuntu):**  
+    ```bash
+    sudo apt update
+    sudo apt install ffmpeg
+    ```
+- **Windows:**  
+    1. Download FFmpeg from [ffmpeg.org/download.html](https://ffmpeg.org/download.html).
+    2. Extract the files and add the `bin` folder to your system's PATH.
 
 
-## 2. Run the Script
+
+### Step 3. Run the Script
 
 Once the setup is complete, you can run the script from your terminal:
 
@@ -61,6 +87,8 @@ The script will then prompt you to enter the following information:
 * Optional details like the author, cover image URL, year, and narrator.
 
 After you provide the details, it will display a summary table, and the download will begin with a progress bar for each chapter.
+
+Enjoy :)
 
 ---
 
