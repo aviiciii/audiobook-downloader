@@ -3,6 +3,11 @@
 
 This Python script downloads all chapters of an audiobook from `tokybook.com`, embeds metadata (title, author, narrator, etc.), and attaches cover art.
 
+
+> **Note:**  
+> This project is intended for educational purposes only. Please respect copyright laws and the terms of service of [tokybook](https://tokybook.com).
+
+
 ![Repo Stars](https://img.shields.io/github/stars/aviiciii/tokybook?style=social)
 ![Python](https://img.shields.io/badge/Python-3.7%2B-blue?logo=python&logoColor=white)
 ![Platform](https://img.shields.io/badge/Platform-Cross--Platform-009688?logo=windows&logoColor=white)
@@ -30,13 +35,17 @@ To run this script, you need [Python 3 ](https://www.python.org/downloads/)insta
 
 First, you need to install the necessary Python libraries. This project includes a `requirements.txt` file that lists all the dependencies.
 
-To install them, open your terminal or command prompt in the project directory and run the following command:
+To install them, open your terminal or command prompt in the project directory and run:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-This command will read the `requirements.txt` file and automatically install all the necessary libraries.
+> **Note:**  
+> Additionally, you need to install **FFmpeg**, which is required for audio processing.  
+> You can download it from [ffmpeg.org](https://ffmpeg.org/download.html) and follow the installation instructions for your operating system.  
+> Make sure `ffmpeg` is available in your system's PATH so the script can use it.
+
 
 ## 2. Run the Script
 
@@ -49,8 +58,7 @@ python main.py
 The script will then prompt you to enter the following information:
 
 * The Tokybook URL for the audiobook.
-* A direct URL for the cover image.
-* Optional details like the author, year, and narrator.
+* Optional details like the author, cover image URL, year, and narrator.
 
 After you provide the details, it will display a summary table, and the download will begin with a progress bar for each chapter.
 
@@ -60,7 +68,8 @@ After you provide the details, it will display a summary table, and the download
 
 This tool was made possible by the developers of the following open-source libraries:
 
-* [SajaDevil/Tokybook-audiobook-downloader](https://github.com/SajaDevil/Tokybook-audiobook-downloader)
+* **[yt-dlp](https://github.com/yt-dlp/yt-dlp)**
+* **[FFmpeg](https://ffmpeg.org/)**
 * **[Requests](https://requests.readthedocs.io/en/latest/)**
 * **[Beautiful Soup](https://www.crummy.com/software/BeautifulSoup/bs4/doc/)**
 * **[Tqdm](https://github.com/tqdm/tqdm)**
