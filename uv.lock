@@ -352,7 +352,7 @@ requires-dist = [
     { name = "mutagen", specifier = "==1.47.0" },
     { name = "pycryptodomex", specifier = "==3.23.0" },
     { name = "requests", specifier = "==2.32.4" },
-    { name = "rich", specifier = ">=14.1.0" },
+    { name = "rich", specifier = "==14.1.0" },
     { name = "soupsieve", specifier = "==2.7" },
     { name = "tqdm", specifier = "==4.67.1" },
     { name = "typing-extensions", specifier = "==4.14.1" },

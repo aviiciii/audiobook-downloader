@@ -47,15 +47,7 @@ cd tokybook
 
 This project requires both Python packages and FFmpeg for audio processing.
 
-**Install Python Packages:**  
-The `requirements.txt` file lists all the dependencies.  
-Open your terminal or command prompt in the project directory and run:
-
-```bash
-pip install -r requirements.txt
-```
-
-**Install FFmpeg:**  
+#### Install FFmpeg: 
 Make sure FFmpeg is available in your system's PATH.
 
 - **macOS:**  
@@ -71,14 +63,38 @@ Make sure FFmpeg is available in your system's PATH.
     1. Download FFmpeg from [ffmpeg.org/download.html](https://ffmpeg.org/download.html).
     2. Extract the files and add the `bin` folder to your system's PATH.
 
+#### Install Python Packages:
+
+You can install the required Python packages using either **pip** or the faster **[uv](https://github.com/astral-sh/uv)** package manager:
+
+**Option A: Using uv (recommended)**
+
+If you have [uv](https://github.com/astral-sh/uv) installed, just run:
+
+```bash
+uv sync
+```
+
+**Option B: Using pip**
+
+```bash
+pip install -r requirements.txt
+```
 
 
-### Step 3. Run the Script
+
+### Step 3: Run the Script
 
 Once the setup is complete, you can run the script from your terminal:
 
+**Option A: Using uv**
 ```bash
-python main.py
+uv run main.py
+```
+
+**Option B: Using Python**
+```bash
+python main.py # or python3 main.py on some systems
 ```
 
 The script will then prompt you to enter the following information:
@@ -86,7 +102,7 @@ The script will then prompt you to enter the following information:
 * The Tokybook URL for the audiobook.
 * Optional details like the author, cover image URL, year, and narrator.
 
-After you provide the details, it will display a summary table, and the download will begin with a progress bar for each chapter.
+After you provide the details, it will display a summary table, and the download will begin.
 
 Enjoy :)
 
@@ -102,5 +118,7 @@ This tool was made possible by the developers of the following open-source libra
 * **[Beautiful Soup](https://www.crummy.com/software/BeautifulSoup/bs4/doc/)**
 * **[Tqdm](https://github.com/tqdm/tqdm)**
 * **[Mutagen](https://mutagen.readthedocs.io/en/latest/)**
+* **[Rich](https://github.com/Textualize/rich)**
+* **[uv](https://github.com/astral-sh/uv)**
 
 A special thanks to the team behind `tokybook.com` for providing access to the audiobooks.

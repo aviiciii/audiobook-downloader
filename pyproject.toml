@@ -13,7 +13,7 @@ dependencies = [
     "mutagen==1.47.0",
     "pycryptodomex==3.23.0",
     "requests==2.32.4",
-    "rich>=14.1.0",
+    "rich==14.1.0",
     "soupsieve==2.7",
     "tqdm==4.67.1",
     "typing-extensions==4.14.1",
