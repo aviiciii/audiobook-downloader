@@ -2,6 +2,7 @@ import os
 import re
 import requests
 import subprocess
+from http.client import IncompleteRead
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 from mutagen.id3 import (
@@ -12,18 +13,40 @@ from rich.console import Console
 
 # --- Import and select the correct scraper ---
 from scrapers.tokybook import TokybookScraper
+from scrapers.goldenaudiobook import GoldenAudiobookScraper
 
 
 console = Console()
+
+def download_chapters_golden(session, url, final_file_name, headers, chapter_title, progress):
+    max_attempts = 5
+    for attempt in range(max_attempts):
+        try:
+            with session.get(url, headers=headers, stream=True, timeout=(10, 180)) as r:
+                if r.status_code == 403:
+                    raise requests.exceptions.HTTPError("403 Forbidden")
+                r.raise_for_status()
+                with open(final_file_name, "wb") as f:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        if chunk:
+                            f.write(chunk)
+            return  # Success, exit the function
+        except (requests.exceptions.RequestException, IncompleteRead) as e:
+            progress.log(f"[yellow]Attempt {attempt + 1} failed for {chapter_title}: {e}[/yellow] [link={url}]{url}[/link]")
+            if attempt < max_attempts - 1:
+                time.sleep(2 ** attempt)
+    raise Exception(f"Failed to download {chapter_title} ({url}) after {max_attempts} attempts")
 
 def get_scraper(url):
     """Factory function to select the correct scraper based on the URL."""
     if "tokybook.com" in url:
         return TokybookScraper()
-    
+    if "goldenaudiobook.net" in url:
+        return GoldenAudiobookScraper()
     return None
 
 from rich.progress import Progress
+import time
 
 def download_and_tag_audiobook(book_data):
     sanitized_title = book_data['title']
@@ -41,30 +64,56 @@ def download_and_tag_audiobook(book_data):
 
     # Use Rich progress bar
     with Progress() as progress:
-        task = progress.add_task(f"[cyan]Downloading {sanitized_title}...", total=total_chapters, )
-
+        task = progress.add_task(f"[cyan]Downloading {sanitized_title}...", total=total_chapters)
+        session = requests.Session()
         for i, chapter in enumerate(book_data['chapters'], start=1):
-            
             link = chapter['url']
             chapter_title = chapter['title']
-            progress.log(f"[cyan]Downloading {chapter_title}...[/cyan]")
             final_file_name = os.path.join(book_dir, f"{chapter_title}.mp3")
-            output_template = os.path.join(book_dir, f"{chapter_title}.%(ext)s")
+            
 
-            command = [
-                'yt-dlp', '--quiet', '--no-warnings', '-x',
-                '--audio-format', 'mp3', '--audio-quality', '0', '--retries', '5'
-            ]
-
-            if book_data.get('site_headers'):
-                for key, value in book_data['site_headers'].items():
-                    command.extend(['--add-header', f"{key}: {value}"])
-
-            command.extend(['-o', output_template, link])
+            
 
             try:
-                subprocess.run(command, check=True, capture_output=True, text=True)
+                if book_data.get('site') == 'goldenaudiobook.net':
+                    
+                    # Use requests for direct MP3 links
+                    
+                    session.headers.update()
+                    # Visit main page to get cookies
+                    session.get(book_data.get('book_url'))
+                    headers = book_data.get('site_headers', {})
+                    # skip if already downloaded
+                    if os.path.exists(final_file_name):
+                        progress.log(f"[yellow]Skipping {chapter_title}, already exists.[/yellow]")
+                        progress.advance(task)
+                        continue
+                    progress.log(f"[cyan]Downloading {chapter_title}...[/cyan]")
+                    download_chapters_golden(session, link, final_file_name, headers, chapter_title, progress)
 
+                else:
+                    progress.log(f"[cyan]Downloading {chapter_title}...[/cyan]")
+                    # fallback to yt-dlp
+                    output_template = os.path.join(book_dir, f"{chapter_title}.%(ext)s")
+                    command = [
+                        'yt-dlp', '-x',
+                        '--audio-format', 'mp3', '--audio-quality', '0', '--retries', '5'
+                    ]
+                    if book_data.get('site_headers'):
+                        for key, value in book_data['site_headers'].items():
+                            command.extend(['--add-header', f"{key}: {value}"])
+                    command.extend(['-o', output_template, link])
+                    result = subprocess.run(command, capture_output=True, text=True)
+                    
+                    if result.returncode != 0:
+                        progress.log(f"[red]Error downloading {chapter_title}[/red]")
+                        if result.stdout.strip():
+                            console.print(f"[cyan]stdout:[/cyan]\n{result.stdout}")
+                        if result.stderr.strip():
+                            console.print(f"[cyan]stderr:[/cyan]\n{result.stderr}")
+                        return
+
+                # --- Add ID3 tags ---
                 try:
                     audio = ID3(final_file_name)
                 except ID3NoHeaderError:
@@ -83,13 +132,13 @@ def download_and_tag_audiobook(book_data):
 
             except Exception as e:
                 console.print(f"[red]Error downloading {chapter_title}: {e}[/red]")
+                return
 
-            # update progress bar
             progress.log(f"[green]✔ Completed {chapter_title}[/green]")
             progress.advance(task)
 
     console.print("\n[bold green]All chapters downloaded and tagged successfully![/bold green]")
-    
+     
 if __name__ == "__main__":
     console.print("[bold cyan]--- Audiobook Downloader ---[/bold cyan]")
     console.print("[yellow]Requires 'yt-dlp' and 'ffmpeg' to be installed.[/yellow]")
