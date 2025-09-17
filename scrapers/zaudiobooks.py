@@ -30,6 +30,9 @@ class ZaudiobooksScraper:
         name = None
         base_url = "https://files01.freeaudiobooks.top/audio/"
 
+        chapters = []
+        skip_this_track = False
+
         for line in lines[start_index:]:
             if "name" in line:
                 # Extract and clean name
@@ -39,9 +42,16 @@ class ZaudiobooksScraper:
                     .replace("\\", "")
                     .replace("name: ", "")
                     .rstrip(",")
-                    + ".mp3"
                 )
+                if name.lower() == "welcome":
+                    skip_this_track = True
+                else:
+                    skip_this_track = False
+
             if "chapter_link_dropbox" in line:
+                if skip_this_track:
+                    continue
+
                 chapter_link = (
                     line.strip()
                     .replace('"', "")
@@ -50,7 +60,10 @@ class ZaudiobooksScraper:
                     .rstrip(",")
                 )
                 full_url = base_url + chapter_link
-                chapters.append({"title": name.replace(".mp3", ""), "url": full_url})
+                chapter_number = len(chapters) + 1
+                chapter_title = f"Chapter {chapter_number:03d}"
+                chapters.append({"title": chapter_title, "url": full_url})
+
             if "]," in line:
                 break
 
@@ -58,10 +71,12 @@ class ZaudiobooksScraper:
         soup = BeautifulSoup(html, "html.parser")
         title_tag = soup.find("meta", property="og:title")
         cover_tag = soup.find("meta", property="og:image")
+        h1_tag = soup.find("h1", class_="page-title")
+        img_tag = soup.select_one(".inner-article-content img")
 
-        title = title_tag["content"] if title_tag else "Unknown Title"
-        cover_url = cover_tag["content"] if cover_tag else None
-        print(chapters)
+        title = h1_tag.text if h1_tag else (title_tag["content"] if title_tag else "Unknown Title")
+        cover_url = img_tag["src"] if img_tag else (cover_tag["content"] if cover_tag else None)
+
         return {
             "site": "zaudiobooks.com",
             "book_url": book_url,

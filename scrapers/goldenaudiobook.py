@@ -208,7 +208,7 @@ class GoldenAudiobookScraper:
         """Extracts the publication year from the <time> tag."""
         time_tag = soup.find("time", class_="entry-date")
         if time_tag and time_tag.get("datetime"):
-            # The datetime is in ISO format, e.g., "2017-02-13T12:44:28+00:00"
+
             return time_tag["datetime"][:4]  # Extract the first 4 characters (the year)
         return None
 

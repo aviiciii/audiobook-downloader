@@ -43,7 +43,7 @@ def download_chapters_golden(
                     for chunk in r.iter_content(chunk_size=8192):
                         if chunk:
                             f.write(chunk)
-            return  # Success, exit the function
+            return
         except (requests.exceptions.RequestException, IncompleteRead) as e:
             progress.log(
                 f"[yellow]Attempt {attempt + 1} failed for {chapter_title}: {e}[/yellow] [link={url}]{url}[/link]"
@@ -99,10 +99,7 @@ def download_and_tag_audiobook(book_data):
 
             try:
                 if book_data.get("site") == "goldenaudiobook.net" or book_data.get("site") == "zaudiobooks.com":
-                    # Use requests for direct MP3 links
-                    if book_data.get("site") == "zaudiobooks.com":
-                        if chapter_title.lower() == "welcome":
-                            continue
+
                     session.headers.update()
                     # Visit main page to get cookies
                     # session.get(book_data.get("book_url"))
@@ -246,10 +243,13 @@ if __name__ == "__main__":
         try:
             artwork_response = requests.get(book_data["cover_url"])
             artwork_response.raise_for_status()
+            content_type = artwork_response.headers.get("Content-Type", "")
+            if not content_type.startswith("image/"):
+                raise Exception(f"Cover art URL did not return an image (Content-Type: {content_type})")
             book_data["artwork_data"] = artwork_response.content
             book_data["mime_type"] = (
                 "image/jpeg"
-                if book_data["cover_url"].lower().endswith((".jpg", ".jpeg"))
+                if content_type == "image/jpeg" or book_data["cover_url"].lower().endswith((".jpg", ".jpeg"))
                 else "image/png"
             )
         except requests.exceptions.RequestException as e:
