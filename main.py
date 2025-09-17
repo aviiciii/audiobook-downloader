@@ -19,43 +19,15 @@ from mutagen.id3 import (
 )
 from rich.table import Table
 from rich.console import Console
+from rich.progress import Progress
+import time
 
-# --- Import and select the correct scraper ---
 from scrapers.tokybook import TokybookScraper
 from scrapers.goldenaudiobook import GoldenAudiobookScraper
 from scrapers.zaudiobooks import ZaudiobooksScraper
 
 
 console = Console()
-
-
-def download_chapters_golden(
-    session, url, final_file_name, headers, chapter_title, progress
-):
-    max_attempts = 5
-    for attempt in range(max_attempts):
-        try:
-            with session.get(url, headers=headers, stream=True, timeout=(10, 180)) as r:
-                if r.status_code == 403:
-                    raise requests.exceptions.HTTPError("403 Forbidden")
-                r.raise_for_status()
-                with open(final_file_name, "wb") as f:
-                    for chunk in r.iter_content(chunk_size=8192):
-                        if chunk:
-                            f.write(chunk)
-            return
-        except (requests.exceptions.RequestException, IncompleteRead) as e:
-            progress.log(
-                f"[yellow]Attempt {attempt + 1} failed for {chapter_title}: {e}[/yellow] [link={url}]{url}[/link]"
-            )
-            # open the link in browser for manual intervention if 403
-            if isinstance(e, requests.exceptions.HTTPError) and "403" in str(e):
-                subprocess.run(["open", url])  # macOS specific; use "xdg-open" for Linux or "start" for Windows
-            if attempt < max_attempts - 1:
-                time.sleep(5**attempt)
-    raise Exception(
-        f"Failed to download {chapter_title} ({url}) after {max_attempts} attempts"
-    )
 
 
 def get_scraper(url):
@@ -67,10 +39,6 @@ def get_scraper(url):
     if "zaudiobooks.com" in url:
         return ZaudiobooksScraper()
     return None
-
-
-from rich.progress import Progress
-import time
 
 
 def download_and_tag_audiobook(book_data):
@@ -101,8 +69,10 @@ def download_and_tag_audiobook(book_data):
             final_file_name = os.path.join(book_dir, f"{chapter_title}.mp3")
 
             try:
-                if book_data.get("site") == "goldenaudiobook.net" or book_data.get("site") == "zaudiobooks.com":
-
+                if (
+                    book_data.get("site") == "goldenaudiobook.net"
+                    or book_data.get("site") == "zaudiobooks.com"
+                ):
                     session.headers.update()
                     # Visit main page to get cookies
                     # session.get(book_data.get("book_url"))
@@ -115,7 +85,7 @@ def download_and_tag_audiobook(book_data):
                         progress.advance(task)
                         continue
                     progress.log(f"[cyan]Downloading {chapter_title}...[/cyan]")
-                    download_chapters_golden(
+                    download_chapters_session(
                         session, link, final_file_name, headers, chapter_title, progress
                     )
 
@@ -187,6 +157,37 @@ def download_and_tag_audiobook(book_data):
     )
 
 
+def download_chapters_session(
+    session, url, final_file_name, headers, chapter_title, progress
+):
+    max_attempts = 5
+    for attempt in range(max_attempts):
+        try:
+            with session.get(url, headers=headers, stream=True, timeout=(10, 180)) as r:
+                if r.status_code == 403:
+                    raise requests.exceptions.HTTPError("403 Forbidden")
+                r.raise_for_status()
+                with open(final_file_name, "wb") as f:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        if chunk:
+                            f.write(chunk)
+            return
+        except (requests.exceptions.RequestException, IncompleteRead) as e:
+            progress.log(
+                f"[yellow]Attempt {attempt + 1} failed for {chapter_title}: {e}[/yellow] [link={url}]{url}[/link]"
+            )
+            # open the link in browser for manual intervention if 403
+            if isinstance(e, requests.exceptions.HTTPError) and "403" in str(e):
+                subprocess.run(
+                    ["open", url]
+                )  # macOS specific; use "xdg-open" for Linux or "start" for Windows
+            if attempt < max_attempts - 1:
+                time.sleep(5**attempt)
+    raise Exception(
+        f"Failed to download {chapter_title} ({url}) after {max_attempts} attempts"
+    )
+
+
 if __name__ == "__main__":
     console.print("[bold cyan]--- Audiobook Downloader ---[/bold cyan]")
     console.print("[yellow]Requires 'yt-dlp' and 'ffmpeg' to be installed.[/yellow]")
@@ -248,11 +249,14 @@ if __name__ == "__main__":
             artwork_response.raise_for_status()
             content_type = artwork_response.headers.get("Content-Type", "")
             if not content_type.startswith("image/"):
-                raise Exception(f"Cover art URL did not return an image (Content-Type: {content_type})")
+                raise Exception(
+                    f"Cover art URL did not return an image (Content-Type: {content_type})"
+                )
             book_data["artwork_data"] = artwork_response.content
             book_data["mime_type"] = (
                 "image/jpeg"
-                if content_type == "image/jpeg" or book_data["cover_url"].lower().endswith((".jpg", ".jpeg"))
+                if content_type == "image/jpeg"
+                or book_data["cover_url"].lower().endswith((".jpg", ".jpeg"))
                 else "image/png"
             )
         except requests.exceptions.RequestException as e:

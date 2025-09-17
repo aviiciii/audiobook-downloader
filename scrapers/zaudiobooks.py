@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 
+
 class ZaudiobooksScraper:
     def fetch_book_data(self, book_url: str) -> dict:
         """
@@ -74,8 +75,14 @@ class ZaudiobooksScraper:
         h1_tag = soup.find("h1", class_="page-title")
         img_tag = soup.select_one(".inner-article-content img")
 
-        title = h1_tag.text if h1_tag else (title_tag["content"] if title_tag else "Unknown Title")
-        cover_url = img_tag["src"] if img_tag else (cover_tag["content"] if cover_tag else None)
+        title = (
+            h1_tag.text
+            if h1_tag
+            else (title_tag["content"] if title_tag else "Unknown Title")
+        )
+        cover_url = (
+            img_tag["src"] if img_tag else (cover_tag["content"] if cover_tag else None)
+        )
 
         return {
             "site": "zaudiobooks.com",
