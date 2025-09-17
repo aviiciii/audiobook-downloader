@@ -23,6 +23,7 @@ from rich.console import Console
 # --- Import and select the correct scraper ---
 from scrapers.tokybook import TokybookScraper
 from scrapers.goldenaudiobook import GoldenAudiobookScraper
+from scrapers.zaudiobooks import ZaudiobooksScraper
 
 
 console = Console()
@@ -60,6 +61,8 @@ def get_scraper(url):
         return TokybookScraper()
     if "goldenaudiobook.net" in url:
         return GoldenAudiobookScraper()
+    if "zaudiobooks.com" in url:
+        return ZaudiobooksScraper()
     return None
 
 
@@ -95,12 +98,14 @@ def download_and_tag_audiobook(book_data):
             final_file_name = os.path.join(book_dir, f"{chapter_title}.mp3")
 
             try:
-                if book_data.get("site") == "goldenaudiobook.net":
+                if book_data.get("site") == "goldenaudiobook.net" or book_data.get("site") == "zaudiobooks.com":
                     # Use requests for direct MP3 links
-
+                    if book_data.get("site") == "zaudiobooks.com":
+                        if chapter_title.lower() == "welcome":
+                            continue
                     session.headers.update()
                     # Visit main page to get cookies
-                    session.get(book_data.get("book_url"))
+                    # session.get(book_data.get("book_url"))
                     headers = book_data.get("site_headers", {})
                     # skip if already downloaded
                     if os.path.exists(final_file_name):
