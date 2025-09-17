@@ -48,8 +48,11 @@ def download_chapters_golden(
             progress.log(
                 f"[yellow]Attempt {attempt + 1} failed for {chapter_title}: {e}[/yellow] [link={url}]{url}[/link]"
             )
+            # open the link in browser for manual intervention if 403
+            if isinstance(e, requests.exceptions.HTTPError) and "403" in str(e):
+                subprocess.run(["open", url])  # macOS specific; use "xdg-open" for Linux or "start" for Windows
             if attempt < max_attempts - 1:
-                time.sleep(2**attempt)
+                time.sleep(5**attempt)
     raise Exception(
         f"Failed to download {chapter_title} ({url}) after {max_attempts} attempts"
     )
