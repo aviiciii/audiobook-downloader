@@ -3,7 +3,7 @@
 This Python script downloads all chapters of an audiobook from `tokybook.com` or `zaudiobooks.com`, embeds metadata (title, author, narrator, etc.), and attaches cover art.
 
 > **Note:**
-> This project is intended for educational purposes only. Please respect copyright laws and the terms of service of [tokybook](https://tokybook.com) and [zaudiobooks](https://zaudiobooks.com).
+> This project is intended for educational purposes only. Please respect copyright laws and the terms of service of the respective websites.
 
 ![Last Updated](https://img.shields.io/github/last-commit/aviiciii/tokybook?label=Last%20Updated)
 ![Repo Stars](https://img.shields.io/github/stars/aviiciii/tokybook?style=social)
@@ -12,6 +12,11 @@ This Python script downloads all chapters of an audiobook from `tokybook.com` or
 ![License](https://img.shields.io/github/license/aviiciii/tokybook?color=orange)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
 ![Issues](https://img.shields.io/github/issues/aviiciii/tokybook?color=informational)
+
+## Supported Sites
+* [tokybook.com](https://tokybook.com)
+* [zaudiobooks.com](https://zaudiobooks.com)
+* [goldenaudiobook.com](https://goldenaudiobook.com) (only on Mac)
 
 ## Features
 
@@ -58,7 +63,7 @@ Make sure FFmpeg is available in your system's PATH.
   1. Download FFmpeg from [ffmpeg.org/download.html](https://ffmpeg.org/download.html).
   2. Extract the files and add the `bin` folder to your system's PATH.
 
-#### Install Python Packages:
+#### Install Python Packages and Run the Script:
 
 You can install the required Python packages using either **pip** or the faster **[uv](https://github.com/astral-sh/uv)** package manager:
 
@@ -67,7 +72,7 @@ You can install the required Python packages using either **pip** or the faster 
 If you have [uv](https://github.com/astral-sh/uv) installed, just run:
 
 ```bash
-uv sync
+uv run main.py
 ```
 
 **Option B: Using pip**
@@ -76,17 +81,6 @@ uv sync
 pip install -r requirements.txt
 ```
 
-### Step 3: Run the Script
-
-Once the setup is complete, you can run the script from your terminal:
-
-**Option A: Using uv**
-
-```bash
-uv run main.py
-```
-
-**Option B: Using Python**
 
 ```bash
 python main.py # or python3 main.py on some systems
@@ -94,7 +88,7 @@ python main.py # or python3 main.py on some systems
 
 The script will then prompt you to enter the following information:
 
-* The Tokybook / Zaudiobooks URL for the audiobook.
+* The URL for the audiobook. (It must be from `tokybook.com` or `zaudiobooks.com` or `goldenaudiobook.com`.)
 * Optional details like the author, cover image URL, year, and narrator.
 
 After you provide the details, it will display a summary table, and the download will begin.
@@ -116,4 +110,4 @@ This tool was made possible by the developers of the following open-source libra
 * **[Rich](https://github.com/Textualize/rich)**
 * **[uv](https://github.com/astral-sh/uv)**
 
-A special thanks to the team behind `tokybook.com` and `zaudiobooks.com` for providing access to the audiobooks.
+A special thanks to the team behind `tokybook.com`, `goldenaudiobook.com` and `zaudiobooks.com` for providing access to the audiobooks.
