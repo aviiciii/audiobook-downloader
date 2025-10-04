@@ -18,6 +18,7 @@ This Python script downloads all chapters of an audiobook from `tokybook.com` or
 * [tokybook.com](https://tokybook.com)
 * [zaudiobooks.com](https://zaudiobooks.com)
 * [fulllengthaudiobooks.net](https://fulllengthaudiobooks.net/)
+* [hdaudiobooks.net](https://hdaudiobooks.net/)
 * [goldenaudiobook.com](https://goldenaudiobook.com) (only on Mac)
 
 ## Features
@@ -62,8 +63,11 @@ Make sure FFmpeg is available in your system's PATH.
   sudo apt install ffmpeg
   ```
 - **Windows:**
-  1. Download FFmpeg from [ffmpeg.org/download.html](https://ffmpeg.org/download.html).
-  2. Extract the files and add the `bin` folder to your system's PATH.
+  1. The easiest way is to use [winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/):
+     ```bash
+     winget install ffmpeg
+     ```
+  2. Alternatively, download FFmpeg from [ffmpeg.org/download.html](https://ffmpeg.org/download.html), extract the files, and add the `bin` folder to your system's PATH.
 
 #### Install Python Packages and Run the Script:
 
@@ -89,7 +93,7 @@ python main.py # or python3 main.py on some systems
 
 The script will then prompt you to enter the following information:
 
-* The URL for the audiobook. (It must be from `tokybook.com`, `zaudiobooks.com`, `fulllengthaudiobooks.net` or `goldenaudiobook.com`.)
+* The URL for the audiobook. (It must be from `tokybook.com`, `zaudiobooks.com`, `fulllengthaudiobooks.net`, `hdaudiobooks.net` or `goldenaudiobook.com`.)
 * Optional details like the author, cover image URL, year, and narrator.
 
 After you provide the details, it will display a summary table, and the download will begin.
