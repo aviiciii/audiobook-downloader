@@ -18,7 +18,7 @@ class BigAudiobooksScraper:
         cleaned = raw_title.strip()
         
         # Remove common suffixes like ' Audiobook', ' Audio Book', and HTML entities
-        cleaned = re.sub(r'\s*(Audiobook|Audio Book|Free|&#8217;s)$', '', cleaned, flags=re.I).strip()
+        cleaned = re.sub(r'\s*(Audiobook|Audio Book|Free)$', '', cleaned, flags=re.I).strip()
         
         # Try to split by common separators like '--', '-' or the en dash (\u2013 or &#8211;)
         parts = re.split(r'\s*[-\u2013]\s*', cleaned, maxsplit=1) 
@@ -94,7 +94,7 @@ class BigAudiobooksScraper:
                 # Clean up the URL to remove query parameters like '?_=1'
                 clean_url = chapter_url.split('?')[0]
                 
-                chapter_title = f"Chapter {index + 1:02d}"
+                chapter_title = f"Chapter {index + 1:03d}"
                 
                 chapters.append({
                     "title": chapter_title,
