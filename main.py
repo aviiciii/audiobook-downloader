@@ -72,7 +72,6 @@ def download_and_tag_audiobook(book_data):
                     book_data.get("site") == "goldenaudiobook.net"
                     or book_data.get("site") == "zaudiobooks.com"
                 ):
-                    session.headers.update()
                     # Visit main page to get cookies
                     # session.get(book_data.get("book_url"))
                     headers = book_data.get("site_headers", {})
