@@ -1,10 +1,7 @@
 import os
-import re
 import requests
 import subprocess
 from http.client import IncompleteRead
-from urllib.parse import urljoin
-from bs4 import BeautifulSoup
 from mutagen.id3 import (
     ID3,
     APIC,
@@ -57,7 +54,6 @@ def download_and_tag_audiobook(book_data):
         f"\n[green]Found {total_chapters} chapters. Starting download...[/green]\n"
     )
 
-    # Use Rich progress bar
     with Progress() as progress:
         task = progress.add_task(
             f"[cyan]Downloading {sanitized_title}...", total=total_chapters
@@ -190,7 +186,11 @@ def download_chapters_session(
 
 if __name__ == "__main__":
     console.print("[bold cyan]--- Audiobook Downloader ---[/bold cyan]")
-    console.print("[yellow]Requires 'yt-dlp' and 'ffmpeg' to be installed.[/yellow]")
+
+    # check if ffmpeg is installed
+    if subprocess.run(["ffmpeg", "-version"], capture_output=True).returncode != 0:
+        console.print("[red]Error: ffmpeg is not installed. Check the README for installation instructions.[/red]")
+        exit()
 
     while True:
         input_book_url = console.input("\nEnter the audiobook URL: ").strip()
