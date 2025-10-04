@@ -19,6 +19,7 @@ This Python script downloads all chapters of an audiobook from `tokybook.com` or
 * [zaudiobooks.com](https://zaudiobooks.com)
 * [fulllengthaudiobooks.net](https://fulllengthaudiobooks.net/)
 * [hdaudiobooks.net](https://hdaudiobooks.net/)
+* [bigaudiobooks.net](https://bigaudiobooks.net/)
 * [goldenaudiobook.com](https://goldenaudiobook.com) (only on Mac)
 
 ## Features
@@ -93,7 +94,7 @@ python main.py # or python3 main.py on some systems
 
 The script will then prompt you to enter the following information:
 
-* The URL for the audiobook. (It must be from `tokybook.com`, `zaudiobooks.com`, `fulllengthaudiobooks.net`, `hdaudiobooks.net` or `goldenaudiobook.com`.)
+* The URL for the audiobook. (It must be from `tokybook.com`, `zaudiobooks.com`, `fulllengthaudiobooks.net`, `hdaudiobooks.net`, `bigaudiobooks.net` or `goldenaudiobook.com`.)
 * Optional details like the author, cover image URL, year, and narrator.
 
 After you provide the details, it will display a summary table, and the download will begin.
