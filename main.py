@@ -23,6 +23,7 @@ from scrapers.tokybook import TokybookScraper
 from scrapers.goldenaudiobook import GoldenAudiobookScraper
 from scrapers.zaudiobooks import ZaudiobooksScraper
 from scrapers.fulllengthaudiobooks import FulllengthAudiobooksScraper
+from scrapers.hdaudiobooks import HDAudiobooksScraper
 
 
 console = Console()
@@ -38,6 +39,8 @@ def get_scraper(url):
         return ZaudiobooksScraper()
     if "fulllengthaudiobooks.net" in url:
         return FulllengthAudiobooksScraper()
+    if "hdaudiobooks.net" in url:
+        return HDAudiobooksScraper()
     return None
 
 
