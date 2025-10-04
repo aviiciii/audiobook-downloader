@@ -25,10 +25,15 @@ TEST_URLS = {
     #     "https://fulllengthaudiobooks.net/george-r-r-martin-world-of-ice-fire-audiobook/",
     #     "https://fulllengthaudiobooks.net/john-green-looking-for-alaska-audiobook-2/"
     # ],
-    "hdaudiobooks": [
-        "https://hdaudiobooks.net/what-its-us/",
-        "https://hdaudiobooks.net/audiobook-red-rising-pierce-brown/"
-    ]
+    # "hdaudiobooks": [
+    #     "https://hdaudiobooks.net/what-its-us/",
+    #     "https://hdaudiobooks.net/audiobook-red-rising-pierce-brown/"
+    # ],
+    "bigaudiobooks": [
+        "https://bigaudiobooks.net/gillian-flynn-dark-places-audiobook/",
+        "https://bigaudiobooks.net/1984/"
+    ],
+    
 }
 
 def run_real_test(book_url: str) -> bool:
