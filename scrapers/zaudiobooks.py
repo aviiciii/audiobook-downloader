@@ -31,7 +31,6 @@ class ZaudiobooksScraper:
         name = None
         base_url = "https://files01.freeaudiobooks.top/audio/"
 
-        chapters = []
         skip_this_track = False
 
         for line in lines[start_index:]:
