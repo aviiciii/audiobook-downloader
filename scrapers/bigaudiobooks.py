@@ -32,7 +32,6 @@ class BigAudiobooksScraper:
             title = cleaned
 
         return {"title": title, "author": author}
-
     def fetch_book_data(self, book_url: str) -> Dict[str, Any]:
         """
         Fetches the book page and extracts all relevant data including chapter URLs.
