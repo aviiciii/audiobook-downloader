@@ -5,6 +5,8 @@ This Python script downloads all chapters of an audiobook from `tokybook.com` or
 > **Note:**
 > This project is intended for educational purposes only. Please respect copyright laws and the terms of service of the respective websites.
 
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/aviiciii)
+
 ![Last Updated](https://img.shields.io/github/last-commit/aviiciii/tokybook?label=Last%20Updated)
 ![Repo Stars](https://img.shields.io/github/stars/aviiciii/tokybook?style=social)
 ![Python](https://img.shields.io/badge/Python-3.7%2B-blue?logo=python&logoColor=white)
@@ -35,7 +37,7 @@ This Python script downloads all chapters of an audiobook from `tokybook.com` or
 
 ## Setup and Installation
 
-To run this script, you need [Python 3](https://www.python.org/downloads/) installed on your system.
+To run this script, you need [Python 3.11](https://www.python.org/downloads/) installed on your system.
 
 ### Step 1: Clone the Repository
 
