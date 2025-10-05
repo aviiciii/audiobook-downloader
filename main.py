@@ -197,7 +197,9 @@ if __name__ == "__main__":
 
     # check if ffmpeg is installed
     if subprocess.run(["ffmpeg", "-version"], capture_output=True).returncode != 0:
-        console.print("[red]Error: ffmpeg is not installed. Check the README for installation instructions.[/red]")
+        console.print(
+            "[red]Error: ffmpeg is not installed. Check the README for installation instructions.[/red]"
+        )
         exit()
 
     while True:

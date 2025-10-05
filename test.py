@@ -31,10 +31,10 @@ TEST_URLS = {
     # ],
     "bigaudiobooks": [
         "https://bigaudiobooks.net/gillian-flynn-dark-places-audiobook/",
-        "https://bigaudiobooks.net/1984/"
+        "https://bigaudiobooks.net/1984/",
     ],
-    
 }
+
 
 def run_real_test(book_url: str) -> bool:
     console.print(f"\n[bold cyan]Testing: {book_url}[/bold cyan]")
@@ -75,7 +75,7 @@ def run_real_test(book_url: str) -> bool:
     else:
         console.print(f"[bold red]✗ Test Failed: No MP3s found[/bold red]")
         return False
-    
+
 
 if __name__ == "__main__":
     overall_passed = 0
@@ -93,9 +93,7 @@ if __name__ == "__main__":
         overall_passed += passed
         overall_total += total
 
-        console.print(
-            f"[yellow]Summary for {site}: {passed}/{total} passed[/yellow]"
-        )
+        console.print(f"[yellow]Summary for {site}: {passed}/{total} passed[/yellow]")
 
     console.print(
         f"\n[bold cyan]OVERALL SUMMARY: {overall_passed}/{overall_total} passed[/bold cyan]"
