@@ -1,5 +1,6 @@
 # audio files
 audiobooks/
+Audiobooks/
 *.mp3
 *.wav
 *.flac

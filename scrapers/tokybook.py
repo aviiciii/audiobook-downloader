@@ -61,7 +61,7 @@ class TokybookScraper:
             }
 
         except Exception as e:
-            print(f"An error occurred while scraping Tokybook: {e}")
+            print(f"An error occurred while scraping Tokybook. Kindly check the audiobook link. Error: {e}")
             return None
 
     def _extract_details(self, soup):
