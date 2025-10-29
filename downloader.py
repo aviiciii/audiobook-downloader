@@ -53,7 +53,6 @@ def _download_with_yt_dlp(url, output_template, headers, title, progress_log):
     return True
 
 
-# downloader.py
 
 def _apply_id3_tags(file_path, book_data, track_num, total_tracks):
     """Applies ID3 tags to an MP3 file."""
