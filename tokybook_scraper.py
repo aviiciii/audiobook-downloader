@@ -4,20 +4,21 @@ import time
 import os
 import re
 from urllib.parse import urlparse, quote
+from concurrent.futures import ThreadPoolExecutor
 
 # --- CONFIGURATION ---
 BASE_URL = "https://tokybook.com"
-# Based on your logs, the base path for the audio files:
 AUDIO_API_PATH = "/api/v1/public/audio" 
 FULL_AUDIO_BASE = f"{BASE_URL}{AUDIO_API_PATH}"
-
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
-USER_IP = "1.1.1.1"
+USER_IP = "1.1.1.1" 
+
+# TUNING: Parallel threads
+MAX_WORKERS = 10 
 
 class TokyBookDownloader:
     def __init__(self):
         self.session = requests.Session()
-        # Standard headers for all requests
         self.session.headers.update({
             "user-agent": USER_AGENT,
             "origin": BASE_URL,
@@ -32,23 +33,15 @@ class TokyBookDownloader:
         return re.sub(r'[\\/*?:"<>|]', "", name).strip()
 
     def get_dynamic_headers(self, full_url, audio_id, stream_token):
-        """
-        Generates the mandatory headers for API 3.
-        x-track-src must match the path component of the URL.
-        """
+        """Generates headers matching the specific track path."""
         parsed = urlparse(full_url)
-        path = parsed.path
-        
-        # Ensure path is properly encoded if needed (browsers usually send %20 for spaces)
-        # However, requests usually handles the URL, but the header needs the string.
         return {
             "x-audiobook-id": audio_id,
             "x-stream-token": stream_token,
-            "x-track-src": path 
+            "x-track-src": parsed.path 
         }
 
     def get_book_metadata(self, slug):
-        """API 1: Get Book ID and Detail Token"""
         print(f"[*] Fetching metadata for: {slug}...")
         url = f"{BASE_URL}/api/v1/search/post-details"
         payload = {
@@ -59,14 +52,11 @@ class TokyBookDownloader:
                 "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime())
             }
         }
-        
         r = self.session.post(url, json=payload)
-        if r.status_code != 200:
-            raise Exception(f"Failed to get metadata: {r.text}")
+        r.raise_for_status()
         return r.json()
 
     def get_playlist(self, audio_book_id, post_detail_token):
-        """API 2: Get List of Chapters and Stream Token"""
         print("[*] Fetching playlist info...")
         url = f"{BASE_URL}/api/v1/playlist"
         payload = {
@@ -78,69 +68,82 @@ class TokyBookDownloader:
                 "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime())
             }
         }
-
         r = self.session.post(url, json=payload)
-        if r.status_code != 200:
-            raise Exception(f"Failed to get playlist: {r.text}")
+        r.raise_for_status()
         return r.json()
 
-    def download_chapter(self, track, audio_id, stream_token, output_dir):
-        """API 3: Downloads m3u8 and segments with specific headers."""
-        title = self.sanitize_filename(track['trackTitle'])
-        filename = f"{output_dir}/{title}.mp3"
-        
-        # Check if file already exists to skip
-        if os.path.exists(filename):
-            print(f"    [Skipping] {title} (already exists)")
-            return
+    def _fetch_segment_data(self, args):
+        """Worker function for ThreadPool."""
+        ts_url, audio_id, stream_token, index = args
+        headers = self.get_dynamic_headers(ts_url, audio_id, stream_token)
+        try:
+            r = self.session.get(ts_url, headers=headers, timeout=15)
+            if r.status_code == 200:
+                return r.content
+            return None
+        except Exception:
+            return None
 
-        # 1. Build the M3U8 URL
-        # track['src'] is relative like "B08G.../Chapter 1.m3u8"
-        # We must encode the spaces to %20 to match your logs
+    def get_last_chapter_number(self, folder_path):
+        """Finds the highest numbered chapter file in the folder."""
+        max_num = 0
+        if not os.path.exists(folder_path):
+            return 0
+            
+        for f in os.listdir(folder_path):
+            match = re.search(r"Chapter (\d+)\.mp3", f)
+            if match:
+                num = int(match.group(1))
+                if num > max_num:
+                    max_num = num
+        return max_num
+
+    def download_chapter(self, track, chapter_num, audio_id, stream_token, output_dir):
+        filename_only = f"Chapter {chapter_num:03}.mp3"
+        filepath = os.path.join(output_dir, filename_only)
+        
+        # 1. Get m3u8 Playlist
         safe_src = quote(track['src']) 
         m3u8_url = f"{FULL_AUDIO_BASE}/{safe_src}"
-        
-        # 2. Get Headers for M3U8
         headers_m3u8 = self.get_dynamic_headers(m3u8_url, audio_id, stream_token)
         
-        print(f"--> Processing: {title}")
+        print(f"--> Processing: {filename_only}")
         r = self.session.get(m3u8_url, headers=headers_m3u8)
         if r.status_code != 200:
             print(f"    [!] Failed to get m3u8. Status: {r.status_code}")
-            print(f"    [!] Debug URL: {m3u8_url}")
             return
 
-        # 3. Parse Segments
+        # 2. Parse Segments
         lines = r.text.splitlines()
         ts_files = [line for line in lines if not line.startswith("#") and line.strip()]
-        
         base_segment_url = m3u8_url.rsplit('/', 1)[0]
-        
-        # 4. Download Segments
-        with open(filename, 'wb') as outfile:
-            for i, ts_file in enumerate(ts_files):
-                # Construct absolute URL for the segment
-                if ts_file.startswith("http"):
-                    ts_url = ts_file
-                else:
-                    ts_url = f"{base_segment_url}/{ts_file}"
 
-                # !!! CRITICAL: Generate headers for THIS specific TS file !!!
-                # The x-track-src must update to point to the .ts file
-                ts_headers = self.get_dynamic_headers(ts_url, audio_id, stream_token)
-                
-                ts_r = self.session.get(ts_url, headers=ts_headers)
-                
-                if ts_r.status_code == 200:
-                    outfile.write(ts_r.content)
-                    print(f"\r    Segment {i+1}/{len(ts_files)}", end="", flush=True)
-                else:
-                    print(f"\n    [!] Failed segment {i}: {ts_r.status_code}")
+        print(f"    Found {len(ts_files)} segments. Downloading...")
 
-        print(f"\n    [OK] Saved: {filename}")
+        # 3. Prepare Tasks
+        tasks = []
+        for i, ts_file in enumerate(ts_files):
+            if ts_file.startswith("http"):
+                ts_url = ts_file
+            else:
+                ts_url = f"{base_segment_url}/{ts_file}"
+            tasks.append((ts_url, audio_id, stream_token, i))
+
+        # 4. Parallel Download
+        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+            results = executor.map(self._fetch_segment_data, tasks)
+            
+            with open(filepath, 'wb') as outfile:
+                for i, content in enumerate(results):
+                    if content:
+                        outfile.write(content)
+                        # Minimal progress indicator
+                        if i % 10 == 0:
+                            print(f"\r    {i}/{len(ts_files)}", end="", flush=True)
+
+        print(f"\r    [OK] Complete: {filename_only}          ")
 
     def run(self, url):
-        # Step 1
         slug = self.get_slug(url)
         meta = self.get_book_metadata(slug)
         
@@ -148,27 +151,37 @@ class TokyBookDownloader:
         audio_id = meta.get('audioBookId')
         detail_token = meta.get('postDetailToken')
 
-        # Step 2
         playlist_data = self.get_playlist(audio_id, detail_token)
-        stream_token = playlist_data.get('streamToken') # The special token for headers
+        stream_token = playlist_data.get('streamToken')
         tracks = playlist_data.get('tracks', [])
 
-        print(f"[*] Found {len(tracks)} chapters for '{book_title}'")
-        print(f"[*] Audio ID: {audio_id}")
+        print(f"[*] Book: '{book_title}' | Chapters: {len(tracks)}")
         
         if not os.path.exists(book_title):
             os.makedirs(book_title)
 
-        # Step 3
-        for track in tracks:
-            self.download_chapter(track, audio_id, stream_token, book_title)
-            time.sleep(1) # Be polite
+        # Find the highest chapter number currently on disk
+        max_existing = self.get_last_chapter_number(book_title)
+        
+        if max_existing > 0:
+            print(f"[*] Resume detected. Last file found: Chapter {max_existing:03}.mp3")
+            print(f"[*] Skipping 1 to {max_existing - 1}. Redownloading {max_existing}...")
+
+        for i, track in enumerate(tracks, start=1):
+            
+            if i < max_existing:
+                print(f"    [Skipping] Chapter {i:03}.mp3")
+                continue
+            
+            self.download_chapter(track, i, audio_id, stream_token, book_title)
+            
+            # Be polite to the server
+            if i % 5 == 0:
+                time.sleep(1) 
 
         print("\n[*] All downloads complete.")
 
-# --- MAIN ---
 if __name__ == "__main__":
     target_url = "https://tokybook.com/post/project-hail-mary-94ed6d"
-    
     dl = TokyBookDownloader()
     dl.run(target_url)
