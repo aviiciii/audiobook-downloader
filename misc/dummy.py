@@ -13,8 +13,9 @@ HEADERS = {
     "Pragma": "no-cache",
     "Cache-Control": "no-cache",
     "x-audiobook-id": "B08G9PRS1K",
-"x-stream-token": "",
-"x-track-src": "/api/v1/public/audio/B08G9PRS1K-Project-Hail-Mary-Audiobook/Project%20Hail%20Mary%20-%20ch%20-%20001.m3u8"}
+    "x-stream-token": "",
+    "x-track-src": "/api/v1/public/audio/B08G9PRS1K-Project-Hail-Mary-Audiobook/Project%20Hail%20Mary%20-%20ch%20-%20001.m3u8",
+}
 
 # if len(sys.argv) != 3:
 #     print(
@@ -32,16 +33,16 @@ print(req.text)
 
 # Get segments file; segments end in .ts, everything else is junk
 for line in req.iter_lines():
-    line = line.decode('utf8').strip()
+    line = line.decode("utf8").strip()
 
-    if line.endswith('.ts'):
+    if line.endswith(".ts"):
         segments.append(line)
 
 # Parse base url
 parsed = urlparse(initial_url)
 
 # open file, dump segments into it
-with open(output_file, 'wb') as output:
+with open(output_file, "wb") as output:
     for line in segments:
         url = f"{parsed.scheme}://{parsed.netloc}{line}"
         HEADERS["x-track-src"] = urlparse(url).path

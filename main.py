@@ -74,11 +74,11 @@ def download_and_tag_audiobook(book_data):
             chapter_title = chapter["title"]
             # Formatting chapter names with leading zeros for sorting (e.g., Chapter 001.mp3)
             # This handles the user request for "f'Chapter {i:03}'" naming if the scraped title isn't sufficient
-            # But usually we respect the scraped title. 
+            # But usually we respect the scraped title.
             # If you specifically want to force the naming convention:
             # chapter_filename = f"Chapter {i:03}.mp3"
             # final_file_name = os.path.join(book_dir, chapter_filename)
-            
+
             final_file_name = os.path.join(book_dir, f"{chapter_title}.mp3")
 
             try:
@@ -86,59 +86,77 @@ def download_and_tag_audiobook(book_data):
                 if os.path.exists(final_file_name):
                     # For Tokybook, the user requested "Smart Resume" logic (redownload last file).
                     # Since this loop runs linearly 1..N, if we find a file exists:
-                    # 1. We check if the NEXT file also exists. 
+                    # 1. We check if the NEXT file also exists.
                     # 2. If the NEXT file exists, we assume THIS one is fine and skip.
                     # 3. If the NEXT file does NOT exist, we assume THIS one is the "last modified" and redownload it.
-                    
-                    next_chapter_idx = i # 'i' is 1-based, list is 0-based, so book_data["chapters"][i] is the NEXT one
+
+                    next_chapter_idx = i  # 'i' is 1-based, list is 0-based, so book_data["chapters"][i] is the NEXT one
                     is_last_existing = False
-                    
+
                     if next_chapter_idx < len(book_data["chapters"]):
-                         # Construct next filename to check
-                         next_title = book_data["chapters"][next_chapter_idx]["title"]
-                         next_path = os.path.join(book_dir, f"{next_title}.mp3")
-                         if not os.path.exists(next_path):
-                             is_last_existing = True
+                        # Construct next filename to check
+                        next_title = book_data["chapters"][next_chapter_idx]["title"]
+                        next_path = os.path.join(book_dir, f"{next_title}.mp3")
+                        if not os.path.exists(next_path):
+                            is_last_existing = True
                     else:
                         # This is the very last chapter of the book and it exists
-                        is_last_existing = True 
+                        is_last_existing = True
 
                     if book_data.get("site") == "tokybook.com" and is_last_existing:
-                        progress.log(f"[yellow]Resume detected: Redownloading last found file ({chapter_title})...[/yellow]")
+                        progress.log(
+                            f"[yellow]Resume detected: Redownloading last found file ({chapter_title})...[/yellow]"
+                        )
                         # Allow to fall through to download logic below
                     else:
-                        progress.log(f"[dim]Skipping {chapter_title}, already exists.[/dim]")
+                        progress.log(
+                            f"[dim]Skipping {chapter_title}, already exists.[/dim]"
+                        )
                         progress.advance(task)
                         continue
 
                 # --- DOWNLOAD LOGIC ---
-                
+
                 # 1. TOKYBOOK (New Parallel Downloader)
                 if book_data.get("site") == "tokybook.com":
-                    progress.log(f"[cyan]Downloading {chapter_title} (Parallel)...[/cyan]")
+                    progress.log(
+                        f"[cyan]Downloading {chapter_title} (Parallel)...[/cyan]"
+                    )
                     # Download to a temporary TS file first (Tokybook streams are MPEG-TS)
                     temp_ts_file = os.path.join(book_dir, f"{chapter_title}.ts")
-                    TokybookScraper.download_chapter(chapter, book_data, temp_ts_file, progress)
-                    
+                    TokybookScraper.download_chapter(
+                        chapter, book_data, temp_ts_file, progress
+                    )
+
                     # Convert TS to proper MP3 using FFmpeg to ensure metadata tags work
                     progress.log(f"[dim]Converting {chapter_title} to MP3...[/dim]")
                     try:
-                        subprocess.run([
-                            "ffmpeg", "-i", temp_ts_file, 
-                            "-y",           # Overwrite output
-                            "-vn",          # No video
-                            "-acodec", "libmp3lame", 
-                            "-q:a", "2",    # VBR Quality ~190kbps
-                            "-loglevel", "error",
-                            final_file_name
-                        ], check=True)
-                        
+                        subprocess.run(
+                            [
+                                "ffmpeg",
+                                "-i",
+                                temp_ts_file,
+                                "-y",  # Overwrite output
+                                "-vn",  # No video
+                                "-acodec",
+                                "libmp3lame",
+                                "-q:a",
+                                "2",  # VBR Quality ~190kbps
+                                "-loglevel",
+                                "error",
+                                final_file_name,
+                            ],
+                            check=True,
+                        )
+
                         # Cleanup temp file
                         if os.path.exists(temp_ts_file):
                             os.remove(temp_ts_file)
-                            
+
                     except subprocess.CalledProcessError:
-                        progress.log(f"[red]FFmpeg conversion failed for {chapter_title}[/red]")
+                        progress.log(
+                            f"[red]FFmpeg conversion failed for {chapter_title}[/red]"
+                        )
                         continue
                 # 2. GOLDEN / ZAUDIO (Session based)
                 elif (
@@ -152,8 +170,10 @@ def download_and_tag_audiobook(book_data):
                     )
 
                 # 3. GENERIC FALLBACK (yt-dlp)
-                else:   
-                    progress.log(f"[cyan]Downloading {chapter_title} (yt-dlp)...[/cyan]")
+                else:
+                    progress.log(
+                        f"[cyan]Downloading {chapter_title} (yt-dlp)...[/cyan]"
+                    )
                     output_template = os.path.join(book_dir, f"{chapter_title}.%(ext)s")
                     command = [
                         "yt-dlp",
@@ -168,7 +188,7 @@ def download_and_tag_audiobook(book_data):
                     if book_data.get("site_headers"):
                         for key, value in book_data["site_headers"].items():
                             command.extend(["--add-header", f"{key}: {value}"])
-                    
+
                     command.extend(["-o", output_template, link])
                     result = subprocess.run(command, capture_output=True, text=True)
 
@@ -235,7 +255,7 @@ def download_chapters_session(
                 f"[yellow]Attempt {attempt + 1} failed for {chapter_title}: {e}[/yellow] [link={url}]{url}[/link]"
             )
             if isinstance(e, requests.exceptions.HTTPError) and "403" in str(e):
-                subprocess.run(["open", url])
+                subprocess.run(["open", url])  # works only on macOS
             if attempt < max_attempts - 1:
                 time.sleep(5**attempt)
     raise Exception(
@@ -309,7 +329,7 @@ if __name__ == "__main__":
             artwork_response.raise_for_status()
             content_type = artwork_response.headers.get("Content-Type", "")
             if not content_type.startswith("image/"):
-                pass 
+                pass
             else:
                 book_data["artwork_data"] = artwork_response.content
                 book_data["mime_type"] = (

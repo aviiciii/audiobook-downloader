@@ -6,6 +6,7 @@ import os
 from urllib.parse import urlparse, quote
 from concurrent.futures import ThreadPoolExecutor
 
+
 class TokybookScraper:
     BASE_URL = "https://tokybook.com"
     AUDIO_API_PATH = "/api/v1/public/audio"
@@ -18,10 +19,7 @@ class TokybookScraper:
         """
         slug = self._get_slug(url)
         session = requests.Session()
-        session.headers.update({
-            "user-agent": self.USER_AGENT,
-            "origin": self.BASE_URL
-        })
+        session.headers.update({"user-agent": self.USER_AGENT, "origin": self.BASE_URL})
 
         # 1. Get Post Details (Metadata + ID)
         print(f"[*] Fetching metadata for: {slug}...")
@@ -29,12 +27,12 @@ class TokybookScraper:
         payload = {
             "dynamicSlugId": slug,
             "userIdentity": {
-                "ipAddress": "127.0.0.1", # Server ignores exact IP usually
+                "ipAddress": "127.0.0.1",  # Server ignores exact IP usually
                 "userAgent": self.USER_AGENT,
-                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime())
-            }
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime()),
+            },
         }
-        
+
         try:
             r = session.post(details_url, json=payload)
             r.raise_for_status()
@@ -46,14 +44,14 @@ class TokybookScraper:
         title = data.get("title")
         audio_book_id = data.get("audioBookId")
         post_detail_token = data.get("postDetailToken")
-        
+
         # 2. Get Playlist (Tracks + Stream Token)
         print(f"[*] Fetching playlist for ID: {audio_book_id}...")
         playlist_url = f"{self.BASE_URL}/api/v1/playlist"
         playlist_payload = {
             "audioBookId": audio_book_id,
             "postDetailToken": post_detail_token,
-            "userIdentity": payload["userIdentity"]
+            "userIdentity": payload["userIdentity"],
         }
 
         try:
@@ -70,28 +68,34 @@ class TokybookScraper:
         # 3. Format for main.py
         chapters = []
         chapter_number = len(chapters) + 1
-                
+
         for track in tracks:
-            chapters.append({
-                "title": f"Chapter {chapter_number:03d}",
-                "url": track.get("src"), # This is the relative path
-                "src": track.get("src"), # Keeping original for reference
-                "duration": track.get("duration")
-            })
+            chapters.append(
+                {
+                    "title": f"Chapter {chapter_number:03d}",
+                    "url": track.get("src"),  # This is the relative path
+                    "src": track.get("src"),  # Keeping original for reference
+                    "duration": track.get("duration"),
+                }
+            )
             chapter_number += 1
         return {
             "site": "tokybook.com",
             "title": title,
-            "author": data.get("authors", [{}])[0].get("name") if data.get("authors") else "Unknown",
-            "narrator": data.get("narrators", [{}])[0].get("name") if data.get("narrators") else "Unknown",
-            "year": str(time.localtime().tm_year), # API doesn't always give year, defaulting
+            "author": data.get("authors", [{}])[0].get("name")
+            if data.get("authors")
+            else "Unknown",
+            "narrator": data.get("narrators", [{}])[0].get("name")
+            if data.get("narrators")
+            else "Unknown",
+            "year": str(
+                time.localtime().tm_year
+            ),  # API doesn't always give year, defaulting
             "cover_url": data.get("coverImage"),
             "chapters": chapters,
-            "audio_book_id": audio_book_id, # Crucial for download
-            "stream_token": stream_token,   # Crucial for download
-            "site_headers": {
-                "user-agent": self.USER_AGENT
-            }
+            "audio_book_id": audio_book_id,  # Crucial for download
+            "stream_token": stream_token,  # Crucial for download
+            "site_headers": {"user-agent": self.USER_AGENT},
         }
 
     def _get_slug(self, url):
@@ -104,7 +108,7 @@ class TokybookScraper:
             "user-agent": TokybookScraper.USER_AGENT,
             "x-audiobook-id": audio_id,
             "x-stream-token": stream_token,
-            "x-track-src": parsed.path 
+            "x-track-src": parsed.path,
         }
 
     @staticmethod
@@ -128,15 +132,15 @@ class TokybookScraper:
         """
         audio_id = book_data.get("audio_book_id")
         stream_token = book_data.get("stream_token")
-        
+
         # Construct M3U8 URL
         # The chapter['url'] from fetch_book_data is relative path like "ID/Chapter.m3u8"
         # We need to quote it and prepend base
-        safe_src = quote(chapter_data['url'])
+        safe_src = quote(chapter_data["url"])
         m3u8_url = f"{TokybookScraper.FULL_AUDIO_BASE}/{safe_src}"
-        
+
         headers = TokybookScraper._get_dynamic_headers(m3u8_url, audio_id, stream_token)
-        
+
         # 1. Get Playlist
         r = requests.get(m3u8_url, headers=headers)
         if r.status_code != 200:
@@ -144,7 +148,7 @@ class TokybookScraper:
 
         lines = r.text.splitlines()
         ts_files = [line for line in lines if not line.startswith("#") and line.strip()]
-        base_segment_url = m3u8_url.rsplit('/', 1)[0]
+        base_segment_url = m3u8_url.rsplit("/", 1)[0]
 
         # 2. Prepare Parallel Tasks
         tasks = []
@@ -157,13 +161,13 @@ class TokybookScraper:
 
         # 3. Download
         progress.log(f"[dim]Downloading {len(ts_files)} segments in parallel...[/dim]")
-        
+
         downloaded_buffer = []
-        
+
         # Using 10 threads for speed
         with ThreadPoolExecutor(max_workers=10) as executor:
             results = executor.map(TokybookScraper._fetch_segment, tasks)
-            
+
             for chunk in results:
                 if chunk:
                     downloaded_buffer.append(chunk)
@@ -171,6 +175,6 @@ class TokybookScraper:
                     raise Exception("Segment download failed")
 
         # 4. Write to disk
-        with open(output_path, 'wb') as f:
+        with open(output_path, "wb") as f:
             for chunk in downloaded_buffer:
                 f.write(chunk)

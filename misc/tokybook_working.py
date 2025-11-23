@@ -4,11 +4,11 @@ import subprocess
 import os
 import re
 from typing import Dict, Any, List
-from urllib.parse import urlparse # Import urlparse for path extraction
+from urllib.parse import urlparse  # Import urlparse for path extraction
 
 # --- CONFIGURATION (UPDATE THESE VALUES) ---
 # The base book ID from the original request
-AUDIOBOOK_ID = "B08G9PRS1K" 
+AUDIOBOOK_ID = "B08G9PRS1K"
 # The dynamic token required in the POST payload (must be updated from a live session)
 POST_DETAIL_TOKEN = ""
 # The directory where the final audio files will be saved
@@ -19,14 +19,15 @@ PLAYLIST_URL = "https://tokybook.com/api/v1/playlist"
 BASE_STREAM_URL = "https://tokybook.com/api/v1/public/audio/"
 
 HEADERS = {
-    'authority': 'tokybook.com',
-    'accept': '*/*',
-    'accept-encoding': 'gzip, deflate, br, zstd',
-    'content-type': 'application/json',
-    'dnt': '1',
-    'origin': 'https://tokybook.com',
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
+    "authority": "tokybook.com",
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br, zstd",
+    "content-type": "application/json",
+    "dnt": "1",
+    "origin": "https://tokybook.com",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
 }
+
 
 def get_stream_data() -> Dict[str, Any]:
     """
@@ -40,19 +41,22 @@ def get_stream_data() -> Dict[str, Any]:
         "audioBookId": AUDIOBOOK_ID,
         "postDetailToken": POST_DETAIL_TOKEN,
         "userIdentity": {
-            "ipAddress": "122.164.84.165", # Update if necessary
-            "userAgent": HEADERS['user-agent'],
-            "timestamp": "2025-11-23T16:52:25.929Z" # Update if necessary
-        }
+            "ipAddress": "122.164.84.165",  # Update if necessary
+            "userAgent": HEADERS["user-agent"],
+            "timestamp": "2025-11-23T16:52:25.929Z",  # Update if necessary
+        },
     }
-    
+
     try:
-        response = requests.post(PLAYLIST_URL, headers=HEADERS, json=payload, timeout=15)
+        response = requests.post(
+            PLAYLIST_URL, headers=HEADERS, json=payload, timeout=15
+        )
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
         print(f"Error connecting to playlist API: {e}")
         return {}
+
 
 def download_track(stream_token: str, track_info: Dict[str, str], book_title: str):
     """
@@ -60,35 +64,41 @@ def download_track(stream_token: str, track_info: Dict[str, str], book_title: st
     """
     # Clean track title for a valid filename
     safe_title = re.sub(r'[\\/:*?"<>|]', "", track_info["trackTitle"]).strip()
-    
+
     # Construct the final M3U8 URL
-    m3u8_path = track_info['src']
+    m3u8_path = track_info["src"]
     m3u8_url = BASE_STREAM_URL + m3u8_path
-    
+
     # Extract the URL path for the X-Track-Src header
     track_src_path = urlparse(m3u8_url).path
-    
+
     # Output file path and format (e.g., 'Project_Hail_Mary_Audiobook/Project Hail Mary - ch - 001.mp3')
     output_path = os.path.join(OUTPUT_DIR, f"{safe_title}.mp3")
 
     print(f"\nDownloading: {safe_title}")
-    
-    # yt-dlp command arguments. 
+
+    # yt-dlp command arguments.
     command = [
         "yt-dlp",
         # HLS URL is the input source
         m3u8_url,
         # Set custom headers using --add-header
-        "--add-header", f"X-Stream-Token:{stream_token}",
-        "--add-header", f"X-AudioBook-Id:{AUDIOBOOK_ID}",
-        "--add-header", f"X-Track-Src:{track_src_path}",
-        "--add-header", "Referer: https://tokybook.com/", 
+        "--add-header",
+        f"X-Stream-Token:{stream_token}",
+        "--add-header",
+        f"X-AudioBook-Id:{AUDIOBOOK_ID}",
+        "--add-header",
+        f"X-Track-Src:{track_src_path}",
+        "--add-header",
+        "Referer: https://tokybook.com/",
         # Extract audio only
-        "-x", 
+        "-x",
         # Convert to mp3 format
-        "--audio-format", "mp3", 
+        "--audio-format",
+        "mp3",
         # Set output path and filename
-        "-o", output_path,
+        "-o",
+        output_path,
         # Verbose output (optional, good for debugging)
         "-v",
     ]
@@ -102,7 +112,10 @@ def download_track(stream_token: str, track_info: Dict[str, str], book_title: st
         print(e.stderr)
     except FileNotFoundError:
         print("\nERROR: yt-dlp command not found.")
-        print("Please ensure yt-dlp and ffmpeg are installed and accessible in your system's PATH.")
+        print(
+            "Please ensure yt-dlp and ffmpeg are installed and accessible in your system's PATH."
+        )
+
 
 def main():
     if not os.path.exists(OUTPUT_DIR):
@@ -110,22 +123,25 @@ def main():
         print(f"Created output directory: {OUTPUT_DIR}")
 
     data = get_stream_data()
-    
-    if not data or 'streamToken' not in data or not data.get('tracks'):
-        print("Failed to retrieve stream data or token. Check your POST_DETAIL_TOKEN and AUDIOBOOK_ID.")
+
+    if not data or "streamToken" not in data or not data.get("tracks"):
+        print(
+            "Failed to retrieve stream data or token. Check your POST_DETAIL_TOKEN and AUDIOBOOK_ID."
+        )
         return
 
-    stream_token = data['streamToken']
-    tracks = data['tracks']
-    book_title = data.get('bookTitle', 'Unknown Book')
-    
+    stream_token = data["streamToken"]
+    tracks = data["tracks"]
+    book_title = data.get("bookTitle", "Unknown Book")
+
     print(f"\nStep 2: Starting download for '{book_title}' ({len(tracks)} chapters)...")
     print("-" * 30)
-    
+
     for track in tracks:
         download_track(stream_token, track, book_title)
 
     print("\n--- Download complete ---")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
