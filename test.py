@@ -13,22 +13,22 @@ TEST_URLS = {
     #     "https://goldenaudiobook.net/andy-weir-project-hail-mary-audiobook/",
     #     "https://goldenaudiobook.net/pierce-brown-audiobook-red-rising/"
     # ],
-    # "tokybook": [
-    #     "https://tokybook.com/post/project-hail-mary-746adb",
-    #     "https://tokybook.com/post/harry-potter-and-the-sorcerers-stone-book-1-5d0dc7"
-    # ],
-    # "zaudiobooks": [
-    #     "https://zaudiobooks.com/daisy-jones-the-six/",
-    #     "https://zaudiobooks.com/red-rising/"
-    # ],
-    # "fulllengthaudiobooks": [
-    #     "https://fulllengthaudiobooks.net/george-r-r-martin-world-of-ice-fire-audiobook/",
-    #     "https://fulllengthaudiobooks.net/john-green-looking-for-alaska-audiobook-2/"
-    # ],
-    # "hdaudiobooks": [
-    #     "https://hdaudiobooks.net/what-its-us/",
-    #     "https://hdaudiobooks.net/audiobook-red-rising-pierce-brown/"
-    # ],
+    "tokybook": [
+        "https://tokybook.com/post/project-hail-mary-94ed6d",
+        "https://tokybook.com/post/circe-c21c22",
+    ],
+    "zaudiobooks": [
+        "https://zaudiobooks.com/daisy-jones-the-six/",
+        "https://zaudiobooks.com/red-rising/",
+    ],
+    "fulllengthaudiobooks": [
+        "https://fulllengthaudiobooks.net/george-r-r-martin-world-of-ice-fire-audiobook/",
+        "https://fulllengthaudiobooks.net/john-green-looking-for-alaska-audiobook-2/",
+    ],
+    "hdaudiobooks": [
+        "https://hdaudiobooks.net/what-its-us/",
+        "https://hdaudiobooks.net/audiobook-red-rising-pierce-brown/",
+    ],
     "bigaudiobooks": [
         "https://bigaudiobooks.net/gillian-flynn-dark-places-audiobook/",
         "https://bigaudiobooks.net/1984/",
