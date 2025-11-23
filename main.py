@@ -62,7 +62,6 @@ def download_and_tag_audiobook(book_data):
     console.print(
         f"\n[green]Found {total_chapters} chapters. Starting download...[/green]\n"
     )
-    # print(book_data["chapters"])
 
     with Progress() as progress:
         task = progress.add_task(

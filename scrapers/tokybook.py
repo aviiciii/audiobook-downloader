@@ -67,7 +67,7 @@ class TokybookScraper:
 
         # 3. Format for main.py
         chapters = []
-        chapter_number = len(chapters) + 1
+        chapter_number = 1
 
         for track in tracks:
             chapters.append(
@@ -82,16 +82,20 @@ class TokybookScraper:
         return {
             "site": "tokybook.com",
             "title": title,
+            
             "author": data.get("authors", [{}])[0].get("name")
             if data.get("authors")
-            else "Unknown",
+            else None,
+            
             "narrator": data.get("narrators", [{}])[0].get("name")
             if data.get("narrators")
-            else "Unknown",
-            "year": str(
-                time.localtime().tm_year
-            ),  # API doesn't always give year, defaulting
-            "cover_url": data.get("coverImage"),
+            else None,
+            
+            "year": str(data.get("year"))
+            if data.get("year")
+            else None,  # API doesn't always give year, defaulting
+            
+            "cover_url": data.get("coverImage") if data.get("coverImage") else None,
             "chapters": chapters,
             "audio_book_id": audio_book_id,  # Crucial for download
             "stream_token": stream_token,  # Crucial for download
@@ -121,7 +125,7 @@ class TokybookScraper:
             r = requests.get(ts_url, headers=headers, timeout=10)
             if r.status_code == 200:
                 return r.content
-        except:
+        except Exception:
             pass
         return None
 
