@@ -62,6 +62,7 @@ def download_and_tag_audiobook(book_data):
     console.print(
         f"\n[green]Found {total_chapters} chapters. Starting download...[/green]\n"
     )
+    print(book_data["chapters"])
 
     with Progress() as progress:
         task = progress.add_task(
@@ -93,7 +94,7 @@ def download_and_tag_audiobook(book_data):
                         session, link, final_file_name, headers, chapter_title, progress
                     )
 
-                else:
+                else:   
                     progress.log(f"[cyan]Downloading {chapter_title}...[/cyan]")
                     # fallback to yt-dlp
                     output_template = os.path.join(book_dir, f"{chapter_title}.%(ext)s")
@@ -110,8 +111,11 @@ def download_and_tag_audiobook(book_data):
                     if book_data.get("site_headers"):
                         for key, value in book_data["site_headers"].items():
                             command.extend(["--add-header", f"{key}: {value}"])
+                    if book_data.get("site") == "tokybook.com":
+                        command.extend(["--add-header", f"x-track-src: {chapter['src']}"])
                     command.extend(["-o", output_template, link])
                     result = subprocess.run(command, capture_output=True, text=True)
+                    # print(command)
 
                     if result.returncode != 0:
                         progress.log(f"[red]Error downloading {chapter_title}[/red]")

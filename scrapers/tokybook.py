@@ -1,8 +1,12 @@
+import json
 import re
+import time
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from rich.console import Console
+import os
+from requests.utils import default_user_agent
 
 
 class TokybookScraper:
@@ -13,56 +17,84 @@ class TokybookScraper:
 
     def fetch_book_data(self, url):
         """
-        Fetches all necessary book data from a given Tokybook URL.
-
-        Args:
-            url (str): The URL of the audiobook page.
-
-        Returns:
-            dict: A dictionary containing the book's metadata and chapter list,
-                  or None if scraping fails.
+        Fetch book metadata + chapters using the new Tokybook API (2025).
         """
-        self.console.print("[bold cyan]Fetching data from Tokybook...[/bold cyan]")
-        session = requests.Session()
-        session.headers.update(
-            {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-            }
-        )
-        try:
-            response = session.get(url)
-            response.raise_for_status()
-            soup = BeautifulSoup(response.text, "html.parser")
 
-            book_title = soup.find("h1", class_=re.compile(r"text-4xl")).text.strip()
+        self.console.print("[bold cyan]Fetching data from Tokybook API...[/bold cyan]")
+
+        session = requests.Session()
+        user_agent = os.environ.get("USER_AGENT") or os.environ.get("HTTP_USER_AGENT") or default_user_agent()
+        session.headers.update({"User-Agent": user_agent})
+
+        try:
+            # ---------------------------------------------------------
+            # 1) Extract the dynamicSlugId from the URL
+            #    https://tokybook.com/<slug>
+            # ---------------------------------------------------------
+            slug = url.rstrip("/").split("/")[-1]
+
+            api_details_url = f"{self.BASE_URL}/api/v1/search/post-details"
+
+            payload = {
+                "dynamicSlugId": slug,
+                "userIdentity": {
+                    "ipAddress": "0.0.0.0",
+                    "userAgent": session.headers["User-Agent"],
+                    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+                },
+            }
+
+            headers = {
+                "Content-Type": "application/json",
+                "Origin": self.BASE_URL,
+                "Referer": url,
+                "Accept": "*/*",
+                
+            }
+
+            # ---------------------------------------------------------
+            # 2) POST /api/v1/search/post-details
+            # ---------------------------------------------------------
+            resp = session.post(api_details_url, data=json.dumps(payload), headers=headers)
+            resp.raise_for_status()
+            info = resp.json()
+
+            # metadata fields
+            book_title = info["title"]
             sanitized_title = re.sub(r'[<>:"/\\|?*]', "_", book_title)
 
-            details = self._extract_details(soup)
+            cover_url = info.get("coverImage")
+            authors = ", ".join(a["name"] for a in info.get("authors", []))
+            narrators = ", ".join(n["name"] for n in info.get("narrators", []))
 
-            cover_img_tag = soup.select_one("div.md\\:col-span-1 img")
-            cover_url = (
-                urljoin(self.BASE_URL, cover_img_tag["src"]) if cover_img_tag else None
+            audioBookId = info["audioBookId"]
+            postDetailToken = info["postDetailToken"]
+
+            # ---------------------------------------------------------
+            # 3) Fetch playlist using your existing function
+            # ---------------------------------------------------------
+            chapters, site_headers = self._fetch_player_data(
+                session,
+                url,
+                audioBookId,
+                postDetailToken
             )
-
-            play_button = soup.find("button", {"data-action": "play-now"})
-            book_id = play_button["data-book-id"]
-            token = play_button["data-token"]
-
-            chapters, headers = self._fetch_player_data(session, url, book_id, token)
 
             return {
                 "title": sanitized_title,
-                "author": details.get("author"),
-                "narrator": details.get("narrator"),
-                "year": details.get("year"),
+                "author": authors,
+                "narrator": narrators,
+                "year": None,  # API doesn't include year; remove if needed
                 "cover_url": cover_url,
                 "chapters": chapters,
-                "site_headers": headers,
+                "site_headers": site_headers,
+                "site": "tokybook.com",
             }
 
         except Exception as e:
-            print(f"An error occurred while scraping Tokybook: {e}")
+            print(f"Error in fetch_book_data: {e}")
             return None
+
 
     def _extract_details(self, soup):
         """Extracts author, narrator, and year from the details section."""
@@ -91,28 +123,64 @@ class TokybookScraper:
         return details
 
     def _fetch_player_data(self, session, book_url, book_id, token):
-        """Fetches the chapter list from the internal player API."""
-        player_url = f"{self.BASE_URL}/post/player"
-        # Tokybook requires these headers for the player API request
-        headers = {
-            "Referer": book_url,
-            "X-Audiobook-Id": book_id,
-            "X-Playback-Token": token,
-        }
+        """
+        New Tokybook API (2025) playlist fetcher.
+        Uses POST /api/v1/playlist instead of HTML player.
+        """
 
-        response = session.get(player_url, headers=headers)
+        api_url = f"{self.BASE_URL}/api/v1/playlist"
+
+        # Build payload according to browser request
+        payload = {
+            "audioBookId": book_id,
+            "postDetailToken": token,
+            "userIdentity": {
+                "ipAddress": "0.0.0.0",   # Tokybook accepts any value
+                "userAgent": session.headers["User-Agent"],
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+            },
+        }
+        headers = {
+            "Content-Type": "application/json",
+            "Origin": self.BASE_URL,
+            "Accept": "*/*",
+        }
+        
+        
+        
+
+        response = session.post(api_url, data=json.dumps(payload), headers=headers)
         response.raise_for_status()
-        player_soup = BeautifulSoup(response.text, "html.parser")
+
+        data = response.json()
+        
+        
 
         chapters = []
-        for i, item in enumerate(
-            player_soup.find_all("li", class_="playlist-item-hls"), start=1
-        ):
-            src = item.get("data-track-src")
-            if src:
-                title = f"Chapter {i:03}"  # 3-digit zero-padded
-                chapters.append({"url": urljoin(self.BASE_URL, src), "title": title})
+        
+        
+        for i, track in enumerate(data.get("tracks", []), start=1):
+            src = track.get("src")
+            if not src:
+                continue
 
-        # These headers are required by yt-dlp to download the actual audio files
-        headers_for_yt_dlp = {"Referer": book_url, "x-playback-token": token}
+            full_url = urljoin(f"{self.BASE_URL}/api/v1/public/audio/", src)
+            xtracksrc = urljoin(f"/api/v1/public/audio/", src)
+            title = f"Chapter {i:03}"
+            chapters.append({
+                "url": full_url,
+                "title": title,
+                "src": xtracksrc,
+            })
+
+        # yt-dlp requires this header (streamToken replaces old playback token)
+        headers_for_yt_dlp = {
+            "Content-Type": "application/json",
+            "Origin": self.BASE_URL,
+            "Referer": book_url,
+            "x-audiobook-id": data.get("audioBookId"),
+            "x-stream-token": data.get("streamToken"),
+        }
+
         return chapters, headers_for_yt_dlp
+
