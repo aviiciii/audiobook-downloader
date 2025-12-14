@@ -25,6 +25,7 @@ from scrapers.zaudiobooks import ZaudiobooksScraper
 from scrapers.fulllengthaudiobooks import FulllengthAudiobooksScraper
 from scrapers.hdaudiobooks import HDAudiobooksScraper
 from scrapers.bigaudiobooks import BigAudiobooksScraper
+from utils import sanitize_book_title
 
 
 console = Console()
@@ -282,6 +283,7 @@ if __name__ == "__main__":
 
     # --- 1. Scrape data ---
     book_data = scraper.fetch_book_data(input_book_url)
+    book_data["title"] = sanitize_book_title(book_data.get("title", "Unknown_Book"))
 
     if not book_data:
         console.print("[bold red]Could not retrieve book data. Exiting.[/bold red]")
@@ -304,9 +306,10 @@ if __name__ == "__main__":
         console.print(
             "\n[cyan]Enter new details. Press Enter to keep the current value.[/cyan]"
         )
-        book_data["title"] = console.input(
-            f"Title [{book_data.get('title', '')}]: "
-        ).strip() or book_data.get("title")
+        book_data["title"] = sanitize_book_title(
+            console.input(f"Title [{book_data.get('title', '')}]: ").strip()
+            or book_data.get("title")
+        )
         book_data["author"] = console.input(
             f"Author [{book_data.get('author', '')}]: "
         ).strip() or book_data.get("author")

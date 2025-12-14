@@ -82,19 +82,15 @@ class TokybookScraper:
         return {
             "site": "tokybook.com",
             "title": title,
-            
             "author": data.get("authors", [{}])[0].get("name")
             if data.get("authors")
             else None,
-            
             "narrator": data.get("narrators", [{}])[0].get("name")
             if data.get("narrators")
             else None,
-            
             "year": str(data.get("year"))
             if data.get("year")
             else None,  # API doesn't always give year, defaulting
-            
             "cover_url": data.get("coverImage") if data.get("coverImage") else None,
             "chapters": chapters,
             "audio_book_id": audio_book_id,  # Crucial for download
