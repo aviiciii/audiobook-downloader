@@ -45,7 +45,7 @@ class TokyBookDownloader:
         }
 
     def get_book_metadata(self, slug):
-        print(f"[*] Fetching metadata for: {slug}...")
+        # print(f"[*] Fetching metadata for: {slug}...")
         url = f"{BASE_URL}/api/v1/search/post-details"
         payload = {
             "dynamicSlugId": slug,
@@ -60,7 +60,7 @@ class TokyBookDownloader:
         return r.json()
 
     def get_playlist(self, audio_book_id, post_detail_token):
-        print("[*] Fetching playlist info...")
+        # print("[*] Fetching playlist info...")
         url = f"{BASE_URL}/api/v1/playlist"
         payload = {
             "audioBookId": audio_book_id,

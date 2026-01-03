@@ -25,7 +25,7 @@ from scrapers.zaudiobooks import ZaudiobooksScraper
 from scrapers.fulllengthaudiobooks import FulllengthAudiobooksScraper
 from scrapers.hdaudiobooks import HDAudiobooksScraper
 from scrapers.bigaudiobooks import BigAudiobooksScraper
-from utils import sanitize_book_title
+from utils import sanitize_book_title, parse_chapter_ranges
 
 
 console = Console()
@@ -302,7 +302,7 @@ if __name__ == "__main__":
 
     if console.input(
         "[yellow]Do you want to change any of these details? (y/n): [/yellow]"
-    ).lower().strip() in ("y", "yes"):
+    ).lower().strip() in ("y", "yes", "yep", "1"):
         console.print(
             "\n[cyan]Enter new details. Press Enter to keep the current value.[/cyan]"
         )
@@ -322,6 +322,63 @@ if __name__ == "__main__":
         book_data["cover_url"] = console.input(
             f"Cover URL [{book_data.get('cover_url', '')}]: "
         ).strip() or book_data.get("cover_url")
+
+    # --- 3. Chapter Selection Menu ---
+    total_chapters = len(book_data["chapters"])
+    # Store the true total for ID3 tags later
+    book_data["total_chapters_count"] = total_chapters
+
+    console.print(f"\n[green]Found {total_chapters} chapters.[/green]")
+    choice = console.input(
+        "[yellow]Press [bold]Enter[/bold] to download ALL, or type [bold]'s'[/bold] to select specific chapters: [/yellow]"
+    )
+
+    final_chapter_list = []
+
+    if choice.lower().strip() in ("s", "y", "select", "yes", "yep", "1"):
+        console.print(f"\n[bold]Chapters available: 1 to {total_chapters}[/bold]")
+        console.print(
+            "You can specify individual chapters or ranges (e.g., '1-5, 8, 10')."
+        )
+        console.print(
+            "Downloaded chapters will be skipped. To redownload any chapter delete it in the downloads folder."
+        )
+        selection = console.input(
+            "\n[yellow]Enter chapter numbers/ranges to download: [/yellow]"
+        ).lower().strip()
+        selected_indices = parse_chapter_ranges(selection, total_chapters)
+
+        if not selected_indices:
+            console.print("[red]No valid chapters selected. Exiting.[/red]")
+            exit()
+
+        selected_table = Table(
+            title=f"Selected {len(selected_indices)} Chapters",
+            show_header=True,
+            header_style="bold magenta",
+        )
+        selected_table.add_column("#", style="dim", width=4)
+        selected_table.add_column("Chapter Title")
+
+        for idx in selected_indices:
+            if 0 <= idx < len(book_data["chapters"]):
+                title = book_data["chapters"][idx].get("title", "Unknown")
+                selected_table.add_row(f"{idx + 1:02}", title)
+
+        console.print(selected_table)
+
+        # Build new list, ensuring we keep track of original index for ID3 tags
+        for idx in selected_indices:
+            chapter = book_data["chapters"][idx]
+            chapter["track_num"] = idx + 1  # 1-based index
+            final_chapter_list.append(chapter)
+    else:
+        # User wants all chapters
+        for i, chapter in enumerate(book_data["chapters"]):
+            chapter["track_num"] = i + 1
+            final_chapter_list.append(chapter)
+
+    book_data["chapters"] = final_chapter_list
 
     # --- 3. Download cover art ---
     if book_data.get("cover_url"):

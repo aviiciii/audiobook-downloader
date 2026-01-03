@@ -63,6 +63,45 @@ def sanitize_book_title(title, max_length=200):
     return title
 
 
+def parse_chapter_ranges(selection_str, max_chapters):
+    """
+    Parses a string of chapter ranges (e.g., "1-5, 8, 10-12")
+    and returns a sorted list of 0-based indices.
+    """
+    indices = set()
+    
+    if selection_str == "":
+        return []
+        
+    parts = selection_str.split(",")
+
+    for part in parts:
+        part = part.strip()
+        if not part:
+            continue
+
+        if "-" in part:
+            try:
+                start, end = map(int, part.split("-"))
+                # Clamp values to valid range
+                start = max(1, start)
+                end = min(max_chapters, end)
+                if start <= end:
+                    for i in range(start, end + 1):
+                        indices.add(i - 1)  # Convert to 0-based index
+            except ValueError:
+                continue
+        else:
+            try:
+                num = int(part)
+                if 1 <= num <= max_chapters:
+                    indices.add(num - 1)  # Convert to 0-based index
+            except ValueError:
+                continue
+
+    return sorted(list(indices))
+
+
 # --- Example Usage ---
 if __name__ == "__main__":
     from rich.console import Console
@@ -85,3 +124,9 @@ if __name__ == "__main__":
         table.add_row(t, sanitize_book_title(t))
 
     console.print(table)
+    
+    selection = "1-3, 5, 7-9"
+    max_chapters = 10
+    indices = parse_chapter_ranges(selection, max_chapters)
+    console.print(f"Selected chapter indices for '{selection}': {indices}")
+
