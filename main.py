@@ -26,7 +26,7 @@ from scrapers.zaudiobooks import ZaudiobooksScraper
 from scrapers.fulllengthaudiobooks import FulllengthAudiobooksScraper
 from scrapers.hdaudiobooks import HDAudiobooksScraper
 from scrapers.bigaudiobooks import BigAudiobooksScraper
-from utils import sanitize_book_title, parse_chapter_ranges, print_selected_chapters
+from utils import sanitize_book_title, parse_chapter_ranges
 
 
 console = Console()
