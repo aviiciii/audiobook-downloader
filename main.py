@@ -1,5 +1,4 @@
 import os
-import sys
 import requests
 import subprocess
 from http.client import IncompleteRead
