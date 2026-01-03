@@ -345,7 +345,7 @@ if __name__ == "__main__":
         )
         selection = console.input(
             "\n[yellow]Enter chapter numbers/ranges to download: [/yellow]"
-        )
+        ).lower().strip()
         selected_indices = parse_chapter_ranges(selection, total_chapters)
 
         if not selected_indices:

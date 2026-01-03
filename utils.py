@@ -69,6 +69,10 @@ def parse_chapter_ranges(selection_str, max_chapters):
     and returns a sorted list of 0-based indices.
     """
     indices = set()
+    
+    if selection_str == "":
+        return []
+        
     parts = selection_str.split(",")
 
     for part in parts:
@@ -120,3 +124,9 @@ if __name__ == "__main__":
         table.add_row(t, sanitize_book_title(t))
 
     console.print(table)
+    
+    selection = "1-3, 5, 7-9"
+    max_chapters = 10
+    indices = parse_chapter_ranges(selection, max_chapters)
+    console.print(f"Selected chapter indices for '{selection}': {indices}")
+
