@@ -22,7 +22,7 @@ class TokybookScraper:
         session.headers.update({"user-agent": self.USER_AGENT, "origin": self.BASE_URL})
 
         # 1. Get Post Details (Metadata + ID)
-        print(f"[*] Fetching metadata for: {slug}...")
+        # print(f"[*] Fetching metadata for: {slug}...")
         details_url = f"{self.BASE_URL}/api/v1/search/post-details"
         payload = {
             "dynamicSlugId": slug,
@@ -46,7 +46,7 @@ class TokybookScraper:
         post_detail_token = data.get("postDetailToken")
 
         # 2. Get Playlist (Tracks + Stream Token)
-        print(f"[*] Fetching playlist for ID: {audio_book_id}...")
+        # print(f"[*] Fetching playlist for ID: {audio_book_id}...")
         playlist_url = f"{self.BASE_URL}/api/v1/playlist"
         playlist_payload = {
             "audioBookId": audio_book_id,
