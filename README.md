@@ -23,6 +23,7 @@ This Python script downloads all chapters of an audiobook from `tokybook.com` or
 * [hdaudiobooks.net](https://hdaudiobooks.net/)
 * [bigaudiobooks.net](https://bigaudiobooks.net/)
 * [goldenaudiobook.com](https://goldenaudiobook.com) (only on Mac)
+* [naudios.com](https://naudios.com) (watch pages only)
 
 ## Features
 
