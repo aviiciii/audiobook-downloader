@@ -25,6 +25,7 @@ from scrapers.zaudiobooks import ZaudiobooksScraper
 from scrapers.fulllengthaudiobooks import FulllengthAudiobooksScraper
 from scrapers.hdaudiobooks import HDAudiobooksScraper
 from scrapers.bigaudiobooks import BigAudiobooksScraper
+from scrapers.naudios import NaudiosScraper
 from utils import sanitize_book_title, parse_chapter_ranges
 
 
@@ -45,6 +46,9 @@ def get_scraper(url):
         return HDAudiobooksScraper()
     if "bigaudiobooks.net" in url:
         return BigAudiobooksScraper()
+    # naudios.com/watch/<id> — direct MP3 via session (same path as zaudiobooks)
+    if "naudios.com" in url:
+        return NaudiosScraper()
     return None
 
 
@@ -158,10 +162,11 @@ def download_and_tag_audiobook(book_data):
                             f"[red]FFmpeg conversion failed for {chapter_title}[/red]"
                         )
                         continue
-                # 2. GOLDEN / ZAUDIO (Session based)
+                # 2. GOLDEN / ZAUDIO / NAUDIOS (session-based direct download)
                 elif (
                     book_data.get("site") == "goldenaudiobook.net"
                     or book_data.get("site") == "zaudiobooks.com"
+                    or book_data.get("site") == "naudios.com"
                 ):
                     headers = book_data.get("site_headers", {})
                     progress.log(f"[cyan]Downloading {chapter_title}...[/cyan]")
