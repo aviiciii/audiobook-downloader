@@ -46,6 +46,7 @@ def get_scraper(url):
         return HDAudiobooksScraper()
     if "bigaudiobooks.net" in url:
         return BigAudiobooksScraper()
+    # naudios.com/watch/<id> — direct MP3 via session (same path as zaudiobooks)
     if "naudios.com" in url:
         return NaudiosScraper()
     return None
@@ -161,7 +162,7 @@ def download_and_tag_audiobook(book_data):
                             f"[red]FFmpeg conversion failed for {chapter_title}[/red]"
                         )
                         continue
-                # 2. GOLDEN / ZAUDIO (Session based)
+                # 2. GOLDEN / ZAUDIO / NAUDIOS (session-based direct download)
                 elif (
                     book_data.get("site") == "goldenaudiobook.net"
                     or book_data.get("site") == "zaudiobooks.com"

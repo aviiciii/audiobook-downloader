@@ -1,6 +1,20 @@
 """
-Scraper for naudios.com watch pages.
-Audio is served as direct MP3 from audio.naudios.com/audios.php?no=N&postID=ID.
+naudios.com scraper for the audiobook-downloader.
+
+Supported URL format:
+  https://naudios.com/watch/<postID>
+  Example: https://naudios.com/watch/202602269643
+
+How it works:
+  - Watch pages contain an HTML list of tracks; each .track-item has a data-src
+    attribute pointing to the audio endpoint.
+  - Audio is served as direct MP3 from:
+    https://audio.naudios.com/audios.php?no=<track_number>&postID=<postID>
+  - The downloader uses the same session-based flow as zaudiobooks/goldenaudiobook:
+    HTTP GET with User-Agent and Referer headers. No yt-dlp or FFmpeg conversion.
+
+Returned book_data conforms to the shared scraper contract: site, title, author,
+narrator, year, cover_url, chapters (list of {title, url}), site_headers.
 """
 
 import re
@@ -9,6 +23,8 @@ from bs4 import BeautifulSoup
 
 
 class NaudiosScraper:
+    """Scraper for naudios.com audiobook watch pages."""
+
     BASE_URL = "https://naudios.com"
     USER_AGENT = (
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
@@ -17,7 +33,16 @@ class NaudiosScraper:
 
     def fetch_book_data(self, url: str) -> dict | None:
         """
-        Scrape audiobook metadata and chapter (track) URLs from a naudios.com/watch/ page.
+        Scrape audiobook metadata and chapter (track) URLs from a naudios.com watch page.
+
+        Args:
+            url: Full watch URL, e.g. https://naudios.com/watch/202602269643
+
+        Returns:
+            A dict with keys: site, title, author, narrator, year, cover_url,
+            chapters (list of {"title": str, "url": str}), site_headers.
+            author/narrator/year are None (not provided by naudios).
+            None if the URL is invalid or the page cannot be fetched/parsed.
         """
         post_id = self._get_post_id(url)
         if not post_id:
@@ -89,6 +114,14 @@ class NaudiosScraper:
 
     @staticmethod
     def _get_post_id(url: str) -> str | None:
-        """Extract post ID from .../watch/202602269643 or .../watch/202602269643/"""
+        """
+        Extract the numeric post ID from a naudios watch URL.
+
+        Args:
+            url: e.g. "https://naudios.com/watch/202602269643" or ".../watch/202602269643/"
+
+        Returns:
+            The post ID string (e.g. "202602269643") or None if the URL does not match.
+        """
         m = re.search(r"naudios\.com/watch/(\d+)", url)
         return m.group(1) if m else None

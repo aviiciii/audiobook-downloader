@@ -25,6 +25,18 @@ This Python script downloads all chapters of an audiobook from `tokybook.com` or
 * [goldenaudiobook.com](https://goldenaudiobook.com) (only on Mac)
 * [naudios.com](https://naudios.com) (watch pages only)
 
+### Supported sites – details
+
+| Site | URL pattern | Notes |
+|------|-------------|--------|
+| tokybook.com | `tokybook.com/...` | Uses API + HLS-style segments; converted to MP3 via FFmpeg. |
+| zaudiobooks.com | `zaudiobooks.com/...` | Direct MP3 URLs; session download with headers. |
+| fulllengthaudiobooks.net | `fulllengthaudiobooks.net/...` | yt-dlp fallback. |
+| hdaudiobooks.net | `hdaudiobooks.net/...` | yt-dlp fallback. |
+| bigaudiobooks.net | `bigaudiobooks.net/...` | yt-dlp fallback. |
+| goldenaudiobook.com | `goldenaudiobook.net/...` | Mac only; session download. |
+| **naudios.com** | `naudios.com/watch/<postID>` | Watch pages only (e.g. `/watch/202602269643`). Direct MP3 from `audio.naudios.com`; session download with User-Agent and Referer. Title and cover scraped from page; author/narrator/year not provided. |
+
 ## Features
 
 * Downloads all chapters for a given audiobook URL.
@@ -97,7 +109,7 @@ python main.py # or python3 main.py on some systems
 
 The script will then prompt you to enter the following information:
 
-* The URL for the audiobook. (It must be from `tokybook.com`, `zaudiobooks.com`, `fulllengthaudiobooks.net`, `hdaudiobooks.net`, `bigaudiobooks.net` or `goldenaudiobook.com`.)
+* The URL for the audiobook. (It must be from a supported site: `tokybook.com`, `zaudiobooks.com`, `fulllengthaudiobooks.net`, `hdaudiobooks.net`, `bigaudiobooks.net`, `goldenaudiobook.com`, or `naudios.com` watch pages.)
 * Optional details like the author, cover image URL, year, and narrator.
 
 After you provide the details, it will display a summary table, and the download will begin.
