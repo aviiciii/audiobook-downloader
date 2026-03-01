@@ -1,4 +1,6 @@
+import argparse
 import os
+import platform
 import requests
 import subprocess
 from http.client import IncompleteRead
@@ -48,7 +50,7 @@ def get_scraper(url):
     return None
 
 
-def download_and_tag_audiobook(book_data):
+def download_and_tag_audiobook(book_data, output_dir=None):
     sanitized_title = book_data["title"]
     author_name = book_data.get("author")
     narrator_name = book_data.get("narrator")
@@ -56,7 +58,8 @@ def download_and_tag_audiobook(book_data):
     artwork_data = book_data.get("artwork_data")
     mime_type = book_data.get("mime_type")
 
-    book_dir = os.path.join(os.getcwd(), "Audiobooks", sanitized_title)
+    base = output_dir if output_dir else os.getcwd()
+    book_dir = os.path.join(base, "Audiobooks", sanitized_title)
     os.makedirs(book_dir, exist_ok=True)
 
     total_chapters = len(book_data["chapters"])
@@ -255,7 +258,13 @@ def download_chapters_session(
                 f"[yellow]Attempt {attempt + 1} failed for {chapter_title}: {e}[/yellow] [link={url}]{url}[/link]"
             )
             if isinstance(e, requests.exceptions.HTTPError) and "403" in str(e):
-                subprocess.run(["open", url])  # works only on macOS
+                system = platform.system()
+                if system == "Darwin":
+                    subprocess.run(["open", url])
+                elif system == "Windows":
+                    subprocess.run(["start", url], shell=True)
+                elif system == "Linux":
+                    subprocess.run(["xdg-open", url])
             if attempt < max_attempts - 1:
                 time.sleep(5**attempt)
     raise Exception(
@@ -263,33 +272,108 @@ def download_chapters_session(
     )
 
 
-if __name__ == "__main__":
+def build_parser():
+    """Build and return the argument parser for the CLI."""
+    parser = argparse.ArgumentParser(
+        prog="audiobook-downloader",
+        description="Download and tag audiobooks from supported websites.",
+        epilog=(
+            "supported sites:\n"
+            "  tokybook.com, goldenaudiobook.net, zaudiobooks.com,\n"
+            "  fulllengthaudiobooks.net, hdaudiobooks.net, bigaudiobooks.net\n"
+            "\n"
+            "examples:\n"
+            "  %(prog)s https://tokybook.com/post/project-hail-mary-94ed6d\n"
+            '  %(prog)s https://tokybook.com/post/circe-c21c22 -c "1-5,8"\n'
+            "  %(prog)s https://zaudiobooks.com/red-rising/ -o ~/my-audiobooks\n"
+            '  %(prog)s URL --title "My Book" --author "Author Name"\n'
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument("url", nargs="?", default=None, help="audiobook URL to download")
+    parser.add_argument(
+        "-o",
+        "--output",
+        default=None,
+        help="output directory (default: ./Audiobooks)",
+    )
+    parser.add_argument(
+        "-c",
+        "--chapters",
+        default=None,
+        help='chapter selection, e.g. "1-5,8,10" (default: all)',
+    )
+    parser.add_argument("--title", default=None, help="override book title")
+    parser.add_argument("--author", default=None, help="override author name")
+    parser.add_argument("--narrator", default=None, help="override narrator name")
+    parser.add_argument("--year", default=None, help="override publication year")
+    parser.add_argument("--cover-url", default=None, help="override cover art URL")
+    return parser
+
+
+def main(args=None):
+    """Main entry point for the audiobook downloader."""
+    parser = build_parser()
+    parsed = parser.parse_args(args)
+
     console.print("[bold cyan]--- Audiobook Downloader ---[/bold cyan]")
 
     if subprocess.run(["ffmpeg", "-version"], capture_output=True).returncode != 0:
         console.print(
             "[red]Error: ffmpeg is not installed. Check the README for installation instructions.[/red]"
         )
-        exit()
+        exit(1)
 
-    while True:
-        input_book_url = console.input("\nEnter the audiobook URL: ").strip()
+    # --- Get URL (from CLI arg or interactive prompt) ---
+    input_book_url = parsed.url
+    if input_book_url:
         scraper = get_scraper(input_book_url)
-        if scraper:
-            break
-        console.print(
-            "[red]Error: Unsupported website. Please enter a valid URL from a supported site.[/red]"
-        )
+        if not scraper:
+            console.print(
+                "[red]Error: Unsupported website. Please enter a valid URL from a supported site.[/red]"
+            )
+            exit(1)
+    else:
+        while True:
+            input_book_url = console.input("\nEnter the audiobook URL: ").strip()
+            scraper = get_scraper(input_book_url)
+            if scraper:
+                break
+            console.print(
+                "[red]Error: Unsupported website. Please enter a valid URL from a supported site.[/red]"
+            )
 
     # --- 1. Scrape data ---
     book_data = scraper.fetch_book_data(input_book_url)
-    book_data["title"] = sanitize_book_title(book_data.get("title", "Unknown_Book"))
 
     if not book_data:
         console.print("[bold red]Could not retrieve book data. Exiting.[/bold red]")
-        exit()
+        exit(1)
 
-    # --- 2. Review and Override Metadata ---
+    book_data["title"] = sanitize_book_title(book_data.get("title", "Unknown_Book"))
+
+    # --- 2. Apply CLI overrides or interactive review ---
+    cli_overrides = {
+        "title": parsed.title,
+        "author": parsed.author,
+        "narrator": parsed.narrator,
+        "year": parsed.year,
+        "cover_url": parsed.cover_url,
+    }
+    has_overrides = any(v is not None for v in cli_overrides.values())
+
+    if has_overrides:
+        if cli_overrides["title"]:
+            book_data["title"] = sanitize_book_title(cli_overrides["title"])
+        if cli_overrides["author"]:
+            book_data["author"] = cli_overrides["author"]
+        if cli_overrides["narrator"]:
+            book_data["narrator"] = cli_overrides["narrator"]
+        if cli_overrides["year"]:
+            book_data["year"] = cli_overrides["year"]
+        if cli_overrides["cover_url"]:
+            book_data["cover_url"] = cli_overrides["cover_url"]
+
     details_table = Table(title="Scraped Book Details", show_lines=True)
     details_table.add_column("Field", style="bold cyan", width=15)
     details_table.add_column("Value", style="white", min_width=45)
@@ -300,96 +384,122 @@ if __name__ == "__main__":
     details_table.add_row("Cover Art URL", book_data.get("cover_url", "N/A"))
     console.print(details_table)
 
-    if console.input(
-        "[yellow]Do you want to change any of these details? (y/n): [/yellow]"
-    ).lower().strip() in ("y", "yes", "yep", "1"):
-        console.print(
-            "\n[cyan]Enter new details. Press Enter to keep the current value.[/cyan]"
-        )
-        book_data["title"] = sanitize_book_title(
-            console.input(f"Title [{book_data.get('title', '')}]: ").strip()
-            or book_data.get("title")
-        )
-        book_data["author"] = console.input(
-            f"Author [{book_data.get('author', '')}]: "
-        ).strip() or book_data.get("author")
-        book_data["narrator"] = console.input(
-            f"Narrator [{book_data.get('narrator', '')}]: "
-        ).strip() or book_data.get("narrator")
-        book_data["year"] = console.input(
-            f"Year [{book_data.get('year', '')}]: "
-        ).strip() or book_data.get("year")
-        book_data["cover_url"] = console.input(
-            f"Cover URL [{book_data.get('cover_url', '')}]: "
-        ).strip() or book_data.get("cover_url")
+    if not has_overrides:
+        if console.input(
+            "[yellow]Do you want to change any of these details? (y/n): [/yellow]"
+        ).lower().strip() in ("y", "yes", "yep", "1"):
+            console.print(
+                "\n[cyan]Enter new details. Press Enter to keep the current value.[/cyan]"
+            )
+            book_data["title"] = sanitize_book_title(
+                console.input(f"Title [{book_data.get('title', '')}]: ").strip()
+                or book_data.get("title")
+            )
+            book_data["author"] = console.input(
+                f"Author [{book_data.get('author', '')}]: "
+            ).strip() or book_data.get("author")
+            book_data["narrator"] = console.input(
+                f"Narrator [{book_data.get('narrator', '')}]: "
+            ).strip() or book_data.get("narrator")
+            book_data["year"] = console.input(
+                f"Year [{book_data.get('year', '')}]: "
+            ).strip() or book_data.get("year")
+            book_data["cover_url"] = console.input(
+                f"Cover URL [{book_data.get('cover_url', '')}]: "
+            ).strip() or book_data.get("cover_url")
 
-    # --- 3. Chapter Selection Menu ---
+    # --- 3. Chapter Selection ---
     total_chapters = len(book_data["chapters"])
-    # Store the true total for ID3 tags later
     book_data["total_chapters_count"] = total_chapters
-
-    console.print(f"\n[green]Found {total_chapters} chapters.[/green]")
-    choice = console.input(
-        "[yellow]Press [bold]Enter[/bold] to download ALL, or type [bold]'s'[/bold] to select specific chapters: [/yellow]"
-    )
 
     final_chapter_list = []
 
-    if choice.lower().strip() in ("s", "y", "select", "yes", "yep", "1"):
-        console.print(f"\n[bold]Chapters available: 1 to {total_chapters}[/bold]")
-        console.print(
-            "You can specify individual chapters or ranges (e.g., '1-5, 8, 10')."
-        )
-        console.print(
-            "Downloaded chapters will be skipped. To redownload any chapter delete it in the downloads folder."
-        )
-        selection = console.input(
-            "\n[yellow]Enter chapter numbers/ranges to download: [/yellow]"
-        ).lower().strip()
-        selected_indices = parse_chapter_ranges(selection, total_chapters)
-
+    if parsed.chapters:
+        # CLI chapter selection
+        selected_indices = parse_chapter_ranges(parsed.chapters, total_chapters)
         if not selected_indices:
             console.print("[red]No valid chapters selected. Exiting.[/red]")
-            exit()
+            exit(1)
 
-        selected_table = Table(
-            title=f"Selected {len(selected_indices)} Chapters",
-            show_header=True,
-            header_style="bold magenta",
+        console.print(
+            f"\n[green]Selected {len(selected_indices)} of {total_chapters} chapters.[/green]"
         )
-        selected_table.add_column("#", style="dim", width=4)
-        selected_table.add_column("Chapter Title")
-
-        for idx in selected_indices:
-            if 0 <= idx < len(book_data["chapters"]):
-                title = book_data["chapters"][idx].get("title", "Unknown")
-                selected_table.add_row(f"{idx + 1:02}", title)
-
-        console.print(selected_table)
-
-        # Build new list, ensuring we keep track of original index for ID3 tags
         for idx in selected_indices:
             chapter = book_data["chapters"][idx]
-            chapter["track_num"] = idx + 1  # 1-based index
+            chapter["track_num"] = idx + 1
             final_chapter_list.append(chapter)
-    else:
-        # User wants all chapters
+    elif parsed.url:
+        # Non-interactive mode with URL arg: download all by default
+        console.print(f"\n[green]Found {total_chapters} chapters.[/green]")
         for i, chapter in enumerate(book_data["chapters"]):
             chapter["track_num"] = i + 1
             final_chapter_list.append(chapter)
+    else:
+        # Interactive chapter selection
+        console.print(f"\n[green]Found {total_chapters} chapters.[/green]")
+        choice = console.input(
+            "[yellow]Press [bold]Enter[/bold] to download ALL, or type [bold]'s'[/bold] to select specific chapters: [/yellow]"
+        )
+
+        if choice.lower().strip() in ("s", "y", "select", "yes", "yep", "1"):
+            console.print(
+                f"\n[bold]Chapters available: 1 to {total_chapters}[/bold]"
+            )
+            console.print(
+                "You can specify individual chapters or ranges (e.g., '1-5, 8, 10')."
+            )
+            console.print(
+                "Downloaded chapters will be skipped. To redownload any chapter delete it in the downloads folder."
+            )
+            selection = console.input(
+                "\n[yellow]Enter chapter numbers/ranges to download: [/yellow]"
+            ).lower().strip()
+            selected_indices = parse_chapter_ranges(selection, total_chapters)
+
+            if not selected_indices:
+                console.print("[red]No valid chapters selected. Exiting.[/red]")
+                exit(1)
+
+            selected_table = Table(
+                title=f"Selected {len(selected_indices)} Chapters",
+                show_header=True,
+                header_style="bold magenta",
+            )
+            selected_table.add_column("#", style="dim", width=4)
+            selected_table.add_column("Chapter Title")
+
+            for idx in selected_indices:
+                if 0 <= idx < len(book_data["chapters"]):
+                    title = book_data["chapters"][idx].get("title", "Unknown")
+                    selected_table.add_row(f"{idx + 1:02}", title)
+
+            console.print(selected_table)
+
+            for idx in selected_indices:
+                chapter = book_data["chapters"][idx]
+                chapter["track_num"] = idx + 1
+                final_chapter_list.append(chapter)
+        else:
+            for i, chapter in enumerate(book_data["chapters"]):
+                chapter["track_num"] = i + 1
+                final_chapter_list.append(chapter)
 
     book_data["chapters"] = final_chapter_list
 
-    # --- 3. Download cover art ---
+    # --- 4. Set output directory ---
+    if parsed.output:
+        output_dir = parsed.output
+    else:
+        output_dir = os.getcwd()
+
+    # --- 5. Download cover art ---
     if book_data.get("cover_url"):
         console.print("\n[cyan]Downloading cover art...[/cyan]")
         try:
             artwork_response = requests.get(book_data["cover_url"])
             artwork_response.raise_for_status()
             content_type = artwork_response.headers.get("Content-Type", "")
-            if not content_type.startswith("image/"):
-                pass
-            else:
+            if content_type.startswith("image/"):
                 book_data["artwork_data"] = artwork_response.content
                 book_data["mime_type"] = (
                     "image/jpeg"
@@ -402,5 +512,9 @@ if __name__ == "__main__":
                 f"[yellow]Warning: Could not download cover art. Error: {e}[/yellow]"
             )
 
-    # --- 4. Start the download process ---
-    download_and_tag_audiobook(book_data)
+    # --- 6. Start the download process ---
+    download_and_tag_audiobook(book_data, output_dir)
+
+
+if __name__ == "__main__":
+    main()

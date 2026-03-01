@@ -1,6 +1,6 @@
 # Audiobook Downloader and Tagger
 
-This Python script downloads all chapters of an audiobook from `tokybook.com` or `zaudiobooks.com`, embeds metadata (title, author, narrator, etc.), and attaches cover art.
+This Python script downloads all chapters of an audiobook from supported websites, embeds metadata (title, author, narrator, etc.), and attaches cover art.
 
 > **Note:**
 > This project is intended for educational purposes only. Please respect copyright laws and the terms of service of the respective websites.
@@ -9,7 +9,7 @@ This Python script downloads all chapters of an audiobook from `tokybook.com` or
 
 ![Last Updated](https://img.shields.io/github/last-commit/aviiciii/tokybook?label=Last%20Updated)
 ![Repo Stars](https://img.shields.io/github/stars/aviiciii/tokybook?style=social)
-![Python](https://img.shields.io/badge/Python-3.7%2B-blue?logo=python&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.11%2B-blue?logo=python&logoColor=white)
 ![Platform](https://img.shields.io/badge/Platform-Cross--Platform-009688?logo=windows&logoColor=white)
 ![License](https://img.shields.io/github/license/aviiciii/tokybook?color=orange)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
@@ -26,11 +26,12 @@ This Python script downloads all chapters of an audiobook from `tokybook.com` or
 
 ## Features
 
-* Downloads all chapters for a given audiobook URL.
+* **CLI and interactive modes**: Pass URL and options via command line, or use interactive prompts.
+* Downloads all chapters (or a selected range) for a given audiobook URL.
 * Prompts the user for audiobook details (URL, cover art, author, etc.).
 * Automatically scrapes the book title.
 * Embeds essential ID3 tags into each MP3 file for proper organization in media players.
-* Saves the organized, tagged files into an `Audiobooks` folder in the script's directory.
+* Saves the organized, tagged files into an `Audiobooks` folder (configurable via `-o`).
 * Displays a summary table of all metadata before starting the download.
 
 ---
@@ -74,32 +75,86 @@ Make sure FFmpeg is available in your system's PATH.
 
 #### Install Python Packages and Run the Script:
 
-You can install the required Python packages using either **pip** or the faster **[uv](https://github.com/astral-sh/uv)** package manager:
+This project uses **[uv](https://github.com/astral-sh/uv)** as its primary package manager. You can also use pip as a fallback.
 
-**Option A: Using uv (recommended)**
+**Using uv (recommended)**
 
-If you have [uv](https://github.com/astral-sh/uv) installed, just run:
+If you have [uv](https://docs.astral.sh/uv/getting-started/installation/) installed, just run:
+
+```bash
+uv run audiobook-downloader
+```
+
+Or run the script directly:
 
 ```bash
 uv run main.py
 ```
 
-**Option B: Using pip**
+> uv automatically creates a virtual environment, installs dependencies, and runs the command — no manual setup required.
+
+**Using pip (fallback)**
 
 ```bash
-pip install -r requirements.txt
+pip install .
 ```
 
 ```bash
-python main.py # or python3 main.py on some systems
+audiobook-downloader  # or: python main.py
 ```
 
-The script will then prompt you to enter the following information:
+### Usage
 
-* The URL for the audiobook. (It must be from `tokybook.com`, `zaudiobooks.com`, `fulllengthaudiobooks.net`, `hdaudiobooks.net`, `bigaudiobooks.net` or `goldenaudiobook.com`.)
-* Optional details like the author, cover image URL, year, and narrator.
+The tool supports both **interactive mode** (no arguments) and **CLI mode** (with arguments):
 
-After you provide the details, it will display a summary table, and the download will begin.
+#### Interactive Mode
+
+Simply run without arguments and follow the prompts:
+
+```bash
+uv run audiobook-downloader
+```
+
+#### CLI Mode
+
+Pass the URL and options directly:
+
+```bash
+uv run audiobook-downloader <URL> [options]
+```
+
+**Options:**
+
+| Flag | Description |
+|------|-------------|
+| `-o`, `--output DIR` | Output directory (default: `./Audiobooks`) |
+| `-c`, `--chapters RANGE` | Chapter selection, e.g. `"1-5,8,10"` (default: all) |
+| `--title TITLE` | Override book title |
+| `--author AUTHOR` | Override author name |
+| `--narrator NARRATOR` | Override narrator name |
+| `--year YEAR` | Override publication year |
+| `--cover-url URL` | Override cover art URL |
+
+**Examples:**
+
+```bash
+# Download all chapters
+uv run audiobook-downloader https://tokybook.com/post/project-hail-mary-94ed6d
+
+# Download specific chapters
+uv run audiobook-downloader https://tokybook.com/post/circe-c21c22 -c "1-5,8"
+
+# Specify output directory
+uv run audiobook-downloader https://zaudiobooks.com/red-rising/ -o ~/my-audiobooks
+
+# Override metadata
+uv run audiobook-downloader https://tokybook.com/post/some-book --title "My Book" --author "Author Name"
+
+# Show help
+uv run audiobook-downloader --help
+```
+
+When using CLI mode with a URL argument, interactive prompts for metadata editing and chapter selection are skipped (use `--title`, `--author`, etc. and `-c` to set them directly).
 
 Enjoy :)
 
