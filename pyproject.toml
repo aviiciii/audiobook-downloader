@@ -2,6 +2,8 @@
 name = "audiobook-downloader"
 version = "0.1.0"
 description = "Download and tag audiobooks from supported websites"
+readme = "README.md"
+license = { file = "LICENSE.md" }
 requires-python = ">=3.11"
 dependencies = [
     "beautifulsoup4>=4.13",
