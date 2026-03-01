@@ -1,6 +1,6 @@
 # Audiobook Downloader and Tagger
 
-This Python script downloads all chapters of an audiobook from `tokybook.com` or `zaudiobooks.com`, embeds metadata (title, author, narrator, etc.), and attaches cover art.
+This Python script downloads all chapters of an audiobook from supported websites, embeds metadata (title, author, narrator, etc.), and attaches cover art.
 
 > **Note:**
 > This project is intended for educational purposes only. Please respect copyright laws and the terms of service of the respective websites.
@@ -26,11 +26,12 @@ This Python script downloads all chapters of an audiobook from `tokybook.com` or
 
 ## Features
 
-* Downloads all chapters for a given audiobook URL.
+* **CLI and interactive modes**: Pass URL and options via command line, or use interactive prompts.
+* Downloads all chapters (or a selected range) for a given audiobook URL.
 * Prompts the user for audiobook details (URL, cover art, author, etc.).
 * Automatically scrapes the book title.
 * Embeds essential ID3 tags into each MP3 file for proper organization in media players.
-* Saves the organized, tagged files into an `Audiobooks` folder in the script's directory.
+* Saves the organized, tagged files into an `Audiobooks` folder (configurable via `-o`).
 * Displays a summary table of all metadata before starting the download.
 
 ---
@@ -94,12 +95,58 @@ pip install -r requirements.txt
 python main.py # or python3 main.py on some systems
 ```
 
-The script will then prompt you to enter the following information:
+### Usage
 
-* The URL for the audiobook. (It must be from `tokybook.com`, `zaudiobooks.com`, `fulllengthaudiobooks.net`, `hdaudiobooks.net`, `bigaudiobooks.net` or `goldenaudiobook.com`.)
-* Optional details like the author, cover image URL, year, and narrator.
+The tool supports both **interactive mode** (no arguments) and **CLI mode** (with arguments):
 
-After you provide the details, it will display a summary table, and the download will begin.
+#### Interactive Mode
+
+Simply run the script without arguments and follow the prompts:
+
+```bash
+python main.py
+```
+
+#### CLI Mode
+
+Pass the URL and options directly:
+
+```bash
+python main.py <URL> [options]
+```
+
+**Options:**
+
+| Flag | Description |
+|------|-------------|
+| `-o`, `--output DIR` | Output directory (default: `./Audiobooks`) |
+| `-c`, `--chapters RANGE` | Chapter selection, e.g. `"1-5,8,10"` (default: all) |
+| `--title TITLE` | Override book title |
+| `--author AUTHOR` | Override author name |
+| `--narrator NARRATOR` | Override narrator name |
+| `--year YEAR` | Override publication year |
+| `--cover-url URL` | Override cover art URL |
+
+**Examples:**
+
+```bash
+# Download all chapters
+python main.py https://tokybook.com/post/project-hail-mary-94ed6d
+
+# Download specific chapters
+python main.py https://tokybook.com/post/circe-c21c22 -c "1-5,8"
+
+# Specify output directory
+python main.py https://zaudiobooks.com/red-rising/ -o ~/my-audiobooks
+
+# Override metadata
+python main.py https://tokybook.com/post/some-book --title "My Book" --author "Author Name"
+
+# Show help
+python main.py --help
+```
+
+When using CLI mode with a URL argument, interactive prompts for metadata editing and chapter selection are skipped (use `--title`, `--author`, etc. and `-c` to set them directly).
 
 Enjoy :)
 
