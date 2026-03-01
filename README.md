@@ -9,7 +9,7 @@ This Python script downloads all chapters of an audiobook from supported website
 
 ![Last Updated](https://img.shields.io/github/last-commit/aviiciii/tokybook?label=Last%20Updated)
 ![Repo Stars](https://img.shields.io/github/stars/aviiciii/tokybook?style=social)
-![Python](https://img.shields.io/badge/Python-3.7%2B-blue?logo=python&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.11%2B-blue?logo=python&logoColor=white)
 ![Platform](https://img.shields.io/badge/Platform-Cross--Platform-009688?logo=windows&logoColor=white)
 ![License](https://img.shields.io/github/license/aviiciii/tokybook?color=orange)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
@@ -75,24 +75,32 @@ Make sure FFmpeg is available in your system's PATH.
 
 #### Install Python Packages and Run the Script:
 
-You can install the required Python packages using either **pip** or the faster **[uv](https://github.com/astral-sh/uv)** package manager:
+This project uses **[uv](https://github.com/astral-sh/uv)** as its primary package manager. You can also use pip as a fallback.
 
-**Option A: Using uv (recommended)**
+**Using uv (recommended)**
 
-If you have [uv](https://github.com/astral-sh/uv) installed, just run:
+If you have [uv](https://docs.astral.sh/uv/getting-started/installation/) installed, just run:
+
+```bash
+uv run audiobook-downloader
+```
+
+Or run the script directly:
 
 ```bash
 uv run main.py
 ```
 
-**Option B: Using pip**
+> uv automatically creates a virtual environment, installs dependencies, and runs the command — no manual setup required.
+
+**Using pip (fallback)**
 
 ```bash
-pip install -r requirements.txt
+pip install .
 ```
 
 ```bash
-python main.py # or python3 main.py on some systems
+audiobook-downloader  # or: python main.py
 ```
 
 ### Usage
@@ -101,10 +109,10 @@ The tool supports both **interactive mode** (no arguments) and **CLI mode** (wit
 
 #### Interactive Mode
 
-Simply run the script without arguments and follow the prompts:
+Simply run without arguments and follow the prompts:
 
 ```bash
-python main.py
+uv run audiobook-downloader
 ```
 
 #### CLI Mode
@@ -112,7 +120,7 @@ python main.py
 Pass the URL and options directly:
 
 ```bash
-python main.py <URL> [options]
+uv run audiobook-downloader <URL> [options]
 ```
 
 **Options:**
@@ -131,19 +139,19 @@ python main.py <URL> [options]
 
 ```bash
 # Download all chapters
-python main.py https://tokybook.com/post/project-hail-mary-94ed6d
+uv run audiobook-downloader https://tokybook.com/post/project-hail-mary-94ed6d
 
 # Download specific chapters
-python main.py https://tokybook.com/post/circe-c21c22 -c "1-5,8"
+uv run audiobook-downloader https://tokybook.com/post/circe-c21c22 -c "1-5,8"
 
 # Specify output directory
-python main.py https://zaudiobooks.com/red-rising/ -o ~/my-audiobooks
+uv run audiobook-downloader https://zaudiobooks.com/red-rising/ -o ~/my-audiobooks
 
 # Override metadata
-python main.py https://tokybook.com/post/some-book --title "My Book" --author "Author Name"
+uv run audiobook-downloader https://tokybook.com/post/some-book --title "My Book" --author "Author Name"
 
 # Show help
-python main.py --help
+uv run audiobook-downloader --help
 ```
 
 When using CLI mode with a URL argument, interactive prompts for metadata editing and chapter selection are skipped (use `--title`, `--author`, etc. and `-c` to set them directly).
