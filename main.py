@@ -35,7 +35,7 @@ def get_scraper(url):
     """Factory function to select the correct scraper based on the URL."""
     if "tokybook.com" in url:
         return TokybookScraper()
-    if "goldenaudiobook.net" in url:
+    if "goldenaudiobook" in url:
         return GoldenAudiobookScraper()
     if "zaudiobooks.com" in url:
         return ZaudiobooksScraper()
