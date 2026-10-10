@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 class HDAudiobooksScraper:
     """
     Scrape audiobook metadata and chapter MP3 links specifically from
-    hdaudiobooks.net.
+    hdaudiobooks.com or hdaudiobooks.net.
     """
 
     def _clean_title_string(self, raw_title: str) -> Dict[str, Optional[str]]:
@@ -49,9 +49,10 @@ class HDAudiobooksScraper:
         """
         # --- Pre-fetch Setup ---
         # Ensure the URL is for the target domain
-        if urlparse(book_url).netloc != "hdaudiobooks.net":
+        supported_domains = {"hdaudiobooks.com", "hdaudiobooks.net"}
+        if urlparse(book_url).hostname not in supported_domains:
             print(
-                f"Error: URL {book_url} does not match target domain hdaudiobooks.net"
+                f"Error: URL {book_url} does not match a supported HD Audiobooks domain"
             )
             return {}
 
@@ -110,7 +111,7 @@ class HDAudiobooksScraper:
                 chapters.append({"title": chapter_title, "url": clean_url})
 
         return {
-            "site": "hdaudiobooks.net",
+            "site": "hdaudiobooks.com",
             "book_url": book_url,
             "title": title_info["title"],
             "author": title_info["author"],
@@ -122,8 +123,8 @@ class HDAudiobooksScraper:
 
 
 if __name__ == "__main__":
-    # Test URL for hdaudiobooks.net
-    TEST_URL = "https://hdaudiobooks.net/what-its-us/"
+    # Test URL for hdaudiobooks.com
+    TEST_URL = "https://hdaudiobooks.com/what-its-us/"
 
     scraper = HDAudiobooksScraper()
 

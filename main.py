@@ -2,6 +2,7 @@ import os
 import requests
 import subprocess
 from http.client import IncompleteRead
+from urllib.parse import urlparse
 from mutagen.id3 import (
     ID3,
     APIC,
@@ -33,17 +34,18 @@ console = Console()
 
 def get_scraper(url):
     """Factory function to select the correct scraper based on the URL."""
-    if "tokybook.com" in url:
+    hostname = urlparse(url).hostname
+    if hostname == "tokybook.com":
         return TokybookScraper()
-    if "goldenaudiobook.net" in url:
+    if hostname == "goldenaudiobook.net":
         return GoldenAudiobookScraper()
-    if "zaudiobooks.com" in url:
+    if hostname == "zaudiobooks.com":
         return ZaudiobooksScraper()
-    if "fulllengthaudiobooks.net" in url:
+    if hostname in {"fulllengthaudiobooks.com", "fulllengthaudiobooks.net"}:
         return FulllengthAudiobooksScraper()
-    if "hdaudiobooks.net" in url:
+    if hostname in {"hdaudiobooks.com", "hdaudiobooks.net"}:
         return HDAudiobooksScraper()
-    if "bigaudiobooks.net" in url:
+    if hostname == "bigaudiobooks.net":
         return BigAudiobooksScraper()
     return None
 

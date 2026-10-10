@@ -22,12 +22,12 @@ TEST_URLS = {
         "https://zaudiobooks.com/red-rising/",
     ],
     "fulllengthaudiobooks": [
-        "https://fulllengthaudiobooks.net/george-r-r-martin-world-of-ice-fire-audiobook/",
-        "https://fulllengthaudiobooks.net/john-green-looking-for-alaska-audiobook-2/",
+        "https://fulllengthaudiobooks.com/george-r-r-martin-world-of-ice-fire-audiobook/",
+        "https://fulllengthaudiobooks.com/john-green-looking-for-alaska-audiobook-2/",
     ],
     "hdaudiobooks": [
-        "https://hdaudiobooks.net/what-its-us/",
-        "https://hdaudiobooks.net/audiobook-red-rising-pierce-brown/",
+        "https://hdaudiobooks.com/what-its-us/",
+        "https://hdaudiobooks.com/audiobook-red-rising-pierce-brown/",
     ],
     "bigaudiobooks": [
         "https://bigaudiobooks.net/gillian-flynn-dark-places-audiobook/",

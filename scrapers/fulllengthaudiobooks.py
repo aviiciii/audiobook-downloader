@@ -6,7 +6,8 @@ import re
 
 class FulllengthAudiobooksScraper:
     """
-    Scrape audiobook metadata and chapter MP3 links from a fulllengthaudiobooks.net page.
+    Scrape audiobook metadata and chapter MP3 links from a fulllengthaudiobooks.com
+    or fulllengthaudiobooks.net page.
     """
 
     def _clean_title_string(self, raw_title: str) -> Dict[str, Optional[str]]:
@@ -88,7 +89,7 @@ class FulllengthAudiobooksScraper:
                 chapters.append({"title": chapter_title, "url": clean_url})
 
         return {
-            "site": "fulllengthaudiobooks.net",
+            "site": "fulllengthaudiobooks.com",
             "book_url": book_url,
             "title": title_info["title"],
             "author": title_info["author"],
@@ -101,7 +102,7 @@ class FulllengthAudiobooksScraper:
 
 if __name__ == "__main__":
     # This URL corresponds to the HTML provided by the user (Adam Silvera - They Both Die at the End)
-    TEST_URL = "https://fulllengthaudiobooks.net/adam-silvera-they-both-die-at-the-end-audiobook/"
+    TEST_URL = "https://fulllengthaudiobooks.com/adam-silvera-they-both-die-at-the-end-audiobook/"
 
     scraper = FulllengthAudiobooksScraper()
     book_data = scraper.fetch_book_data(TEST_URL)
